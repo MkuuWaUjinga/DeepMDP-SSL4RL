@@ -11,3 +11,10 @@
 * write experiments in `mctis-mri/experiments`, put any scripts to launch them or do postprocessing in `scripts`
 * Composition over inheritance. Use [attr.s](https://pypi.org/project/attrs/) to make data classes, this helps [mypy](http://mypy-lang.org/) (strong recommendation to use it with [pycharm-mypy](mcts_mri) to help you find bugs via [type hints](https://docs.python.org/3/library/typing.html)
 * Use submodules to organize the code
+
+# Logbook
+## IK: 2020-02-25 post-discussion
+
+- Tuesday 1630 regular meeting slot
+- Adrian: till next week, set up benchmark environment with arbitrary model free RL algorithm
+- Igor: this log add references to distributional RL paper to pdfs, [garage](https://github.com/rlworkgroup/garage)  and [rllib](https://github.com/ray-project/ray/tree/master/rllib)
