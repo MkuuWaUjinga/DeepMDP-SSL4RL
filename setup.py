@@ -15,7 +15,8 @@ reqs=[
     "jupyter",
     "ipython",
     "ipdb",
-    "termcolor"
+    "termcolor",
+    "ale-py"
 ]
 
 setup(

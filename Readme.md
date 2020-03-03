@@ -12,6 +12,12 @@
 * Composition over inheritance. Use [attr.s](https://pypi.org/project/attrs/) to make data classes, this helps [mypy](http://mypy-lang.org/) (strong recommendation to use it with [pycharm-mypy](mcts_mri) to help you find bugs via [type hints](https://docs.python.org/3/library/typing.html)
 * Use submodules to organize the code
 
+# Setup
+
+* Clone [arcade learning environment repository](https://github.com/mgbellemare/Arcade-Learning-Environment).
+* Follow the quick start instruction in their Readme. Make sure to install the module in your environment.
+* Run `pip install -e .` to install deepmdp as a python package.
+
 # Logbook
 ## IK: 2020-02-25 post-discussion
 
