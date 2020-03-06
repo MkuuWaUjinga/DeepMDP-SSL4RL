@@ -14,13 +14,13 @@
 
 # Setup
 
-* Clone [arcade learning environment repository](https://github.com/mgbellemare/Arcade-Learning-Environment).
-* Follow the quick start instruction in their Readme. Make sure to install the module in your environment.
-* Run `pip install -e .` to install deepmdp as a python package.
+* Clone [Gym](https://github.com/openai/gym).
+* Run `pip install -e '.[atari]'` to install ataris environments alongside gym. Make sure to install the module in your python environment.
+* Run `pip install -e .` to install deepmdp as a python package. 
 
 # Logbook
 ## IK: 2020-02-25 post-discussion
 
 - Tuesday 1630 regular meeting slot
-- Adrian: till next week, set up benchmark environment with arbitrary model free RL algorithm
+- Adrian: till next week, set up benchmark environment with arbitrary model free RL algorithm.
 - Igor: this log add references to distributional RL paper to pdfs, [garage](https://github.com/rlworkgroup/garage)  and [rllib](https://github.com/ray-project/ray/tree/master/rllib)

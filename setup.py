@@ -16,7 +16,8 @@ reqs=[
     "ipython",
     "ipdb",
     "termcolor",
-    "ale-py"
+    "gym",
+    "garage"
 ]
 
 setup(
