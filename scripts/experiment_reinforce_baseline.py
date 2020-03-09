@@ -4,7 +4,7 @@
 #ex.observers.append(FileStorageObserver("runs"))
 #ex.run()
 
-# Works (Still tensor shape error though)
+# Works (Still tensor shape error though during mean calc of gaussian mlp policy)
 from deepmdp.experiments.reinforce import run_task
 from garage.experiment import LocalRunner, SnapshotConfig, run_experiment
 run_experiment(run_task, snapshot_mode='last', seed=1)
