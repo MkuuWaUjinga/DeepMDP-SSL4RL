@@ -13,9 +13,6 @@
 * Use submodules to organize the code
 
 # Setup
-
-* Clone [Gym](https://github.com/openai/gym).
-* Run `pip install -e '.[atari]'` to install ataris environments alongside gym. Make sure to install the module in your python environment.
 * Run `pip install -e .` to install deepmdp as a python package. 
 
 # Logbook
