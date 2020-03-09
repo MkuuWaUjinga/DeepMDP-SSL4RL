@@ -1,13 +1,11 @@
-import time
 import sacred
 import gym
 import torch
 import os
-import pybulletgym
 
 from garage.envs import normalize
 from garage.envs.base import GarageEnv
-from garage.experiment import LocalRunner, SnapshotConfig, run_experiment
+from garage.experiment import LocalRunner, SnapshotConfig
 from garage.np.baselines import LinearFeatureBaseline
 from garage.torch.algos import VPG
 from garage.torch.policies import GaussianMLPPolicy
@@ -47,8 +45,6 @@ def run_task(snapshot_config, *_):
 
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=400, batch_size=100)
-
-run_experiment(run_task, snapshot_mode='last', seed=1)
 
 
 @ex.main
