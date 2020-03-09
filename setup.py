@@ -1,7 +1,6 @@
 from setuptools import setup
 
 reqs=[
-    "torch",
     "scipy",
     "numpy",
     "matplotlib",
@@ -17,7 +16,8 @@ reqs=[
     "ipdb",
     "termcolor",
     "gym",
-    "garage"
+    "pybulletgym",
+    "garage==2019.10.1"
 ]
 
 setup(

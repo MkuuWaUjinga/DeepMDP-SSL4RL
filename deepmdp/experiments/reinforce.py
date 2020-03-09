@@ -3,13 +3,14 @@ import sacred
 import gym
 import torch
 import os
+import pybulletgym
 
 from garage.envs import normalize
 from garage.envs.base import GarageEnv
-from garage.experiment import LocalRunner, SnapshotConfig
+from garage.experiment import LocalRunner, SnapshotConfig, run_experiment
 from garage.np.baselines import LinearFeatureBaseline
 from garage.torch.algos import VPG
-from garage.torch.policies import DeterministicMLPPolicy
+from garage.torch.policies import GaussianMLPPolicy
 
 ex = sacred.experiment.Experiment("Reinforce-Baseline")
 
@@ -22,23 +23,32 @@ def config():
     env_name = "SpaceInvaders-v0"
 
 
-def run_task(snapshot_config, env_name):
+def run_task(snapshot_config, *_):
     runner = LocalRunner(snapshot_config)
-    env = GarageEnv(normalize(gym.make(env_name)))
-    policy = DeterministicMLPPolicy(env_spec=env.spec,
-                                    hidden_sizes=[64, 64],
-                                    hidden_nonlinearity=torch.relu,
-                                    output_nonlinearity=torch.tanh)
+    env = GarageEnv(normalize(gym.make("SpaceInvaders-v0")))
+    policy = GaussianMLPPolicy(env.spec,
+                               hidden_sizes=[64, 64],
+                               hidden_nonlinearity=torch.tanh,
+                               output_nonlinearity=None)
+    print(env.spec.observation_space.flat_dim)
+    print(env.spec.action_space.flat_dim)
+    print(policy._mean_module)
+
     baseline = LinearFeatureBaseline(env_spec=env.spec)
 
-    vpg = VPG(env.spec,
-              policy,
-              baseline,
-              optimizer=torch.optim.Adam)
+    algo = VPG(env_spec=env.spec,
+               policy=policy,
+               optimizer=torch.optim.Adam,
+               baseline=baseline,
+               max_path_length=100,
+               discount=0.99,
+               center_adv=True,
+               policy_lr=1e-2)
 
-    # VPG takes as default BatchSampler that has n_envs as required positional arg...
-    runner.setup(algo=vpg, env=env, sampler_args={"n_envs":1})
-    runner.train(n_epochs=400, batch_size=128)
+    runner.setup(algo=algo, env=env)
+    runner.train(n_epochs=400, batch_size=100)
+
+run_experiment(run_task, snapshot_mode='last', seed=1)
 
 
 @ex.main
