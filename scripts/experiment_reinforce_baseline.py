@@ -1,11 +1,8 @@
 # Doesn't work
-#from deepmdp.experiments.reinforce import ex
-#from sacred.observers import FileStorageObserver
-#ex.observers.append(FileStorageObserver("runs"))
-#ex.run()
+from deepmdp.experiments.reinforce import ex
+from sacred.observers import FileStorageObserver
+from garage.experiment import deterministic
 
-# Works (Still tensor shape error though during mean calc of gaussian mlp policy)
-from deepmdp.experiments.reinforce import run_task
-from garage.experiment import LocalRunner, SnapshotConfig, run_experiment
-run_experiment(run_task, snapshot_mode='last', seed=1)
-
+deterministic.set_seed(1)
+ex.observers.append(FileStorageObserver("runs"))
+ex.run()
