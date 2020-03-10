@@ -23,14 +23,11 @@ def config():
 
 def run_task(snapshot_config, *_):
     runner = LocalRunner(snapshot_config)
-    env = GarageEnv(normalize(gym.make("SpaceInvaders-v0")))
+    env = GarageEnv(normalize(gym.make("SpaceInvaders-v0"), normalize_obs=True))
     policy = GaussianMLPPolicy(env.spec,
                                hidden_sizes=[64, 64],
                                hidden_nonlinearity=torch.tanh,
                                output_nonlinearity=None)
-    print(env.spec.observation_space.flat_dim)
-    print(env.spec.action_space.flat_dim)
-    print(policy._mean_module)
 
     baseline = LinearFeatureBaseline(env_spec=env.spec)
 
@@ -45,6 +42,7 @@ def run_task(snapshot_config, *_):
 
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=400, batch_size=100)
+
 
 
 @ex.main
