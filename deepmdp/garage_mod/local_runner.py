@@ -9,8 +9,7 @@ from garage.experiment.deterministic import get_seed, set_seed
 from garage.experiment.snapshotter import Snapshotter
 from pathlib import Path
 
-from rmbrl.garage_mod import parallel_sampler
-#from rmbrl.utils.paths import save_archive
+from deepmdp.garage_mod import parallel_sampler
 
 
 class ExperimentStats:
