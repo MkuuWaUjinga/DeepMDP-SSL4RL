@@ -394,8 +394,6 @@ class LocalRunner:
                 self._stats.total_itr = self.step_itr
 
                 self.save(epoch)
-                if self.archive_every and epoch and epoch % self.archive_every == 0:
-                    #save_archive(self._snapshotter.snapshot_dir, dstfile=dstfile)
                 self.log_diagnostics(self._train_args.pause_for_plot)
                 logger.dump_all(self.step_itr)
                 tabular.clear()
