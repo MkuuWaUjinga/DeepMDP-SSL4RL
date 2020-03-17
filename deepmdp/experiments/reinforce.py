@@ -5,10 +5,12 @@ import os
 
 from garage.envs import normalize
 from garage.envs.base import GarageEnv
-from garage.experiment import LocalRunner, SnapshotConfig
-from garage.np.baselines import LinearFeatureBaseline
+from garage.experiment import SnapshotConfig
 from garage.torch.algos import VPG
-from garage.torch.policies import GaussianMLPPolicy
+from deepmdp.garage_mod.categorical_mlp_policy import CategoricalMLPPolicy
+from deepmdp.garage_mod.local_runner import LocalRunner
+from deepmdp.garage_mod.zero_baseline import ZeroBaseline
+
 
 ex = sacred.experiment.Experiment("Reinforce-Baseline")
 
@@ -24,12 +26,12 @@ def config():
 def run_task(snapshot_config, *_):
     runner = LocalRunner(snapshot_config)
     env = GarageEnv(normalize(gym.make("SpaceInvaders-v0"), normalize_obs=True))
-    policy = GaussianMLPPolicy(env.spec,
-                               hidden_sizes=[64, 64],
-                               hidden_nonlinearity=torch.tanh,
-                               output_nonlinearity=None)
+    policy = CategoricalMLPPolicy(env.spec,
+                                  hidden_sizes=[64, 64],
+                                  hidden_nonlinearity=torch.tanh)
 
-    baseline = LinearFeatureBaseline(env_spec=env.spec)
+    # Take zero baseline for now as linear feature baseline fitting to paths requires to much memory for local
+    baseline = ZeroBaseline(env_spec=env.spec)
 
     algo = VPG(env_spec=env.spec,
                policy=policy,
