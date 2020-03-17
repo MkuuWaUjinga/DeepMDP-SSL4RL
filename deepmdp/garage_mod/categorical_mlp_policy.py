@@ -39,7 +39,7 @@ class CategoricalMLPPolicy(Policy, CategoricalMLPModule):
         dist = self.forward(observation)
         return torch.diag(dist.log_prob(action))
 
-    # Todo implement to have entropy-based losses as optimization objective (enforces the policy to be act as random as possible)
+    # Todo implement to have entropy-based losses as optimization objective (enforces the policy to act as random as possible)
     def get_entropy(self, observation):
         """Get entropy given observations."""
         return torch.Tensor([])
