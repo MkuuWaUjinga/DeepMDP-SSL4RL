@@ -15,7 +15,8 @@ from garage.envs.wrappers.fire_reset import FireReset
 from garage.envs.wrappers.noop import Noop
 from garage.envs.wrappers.resize import Resize
 from garage.envs.wrappers.stack_frames import StackFrames
-from garage.envs import GarageEnv, normalize
+from garage.envs import GarageEnv
+from garage.torch.q_functions.continuous_mlp_q_function import ContinuousMLPQFunction
 from deepmdp.garage_mod.env_wrappers.grayscale import Grayscale
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
@@ -54,9 +55,10 @@ def run_task(snapshot_config, env_name):
     env = GarageEnv(env)
 
     runner = LocalRunner(snapshot_config)
-    replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=int(1e7), time_horizon=1)
+    # Use buffer of size 1e7
+    replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=int(100), time_horizon=1)
 
-    # Todo check whether it is decaying linearly or exponentially
+    # Todo check whether epsilon is decaying linearly
     strategy = EpsilonGreedyStrategy(env.spec, num_timesteps, max_epsilon=1, min_epsilon=0.1)
 
     qf = DiscreteCNNQFunction(env_spec=env.spec,
@@ -66,13 +68,15 @@ def run_task(snapshot_config, env_name):
                               dense_sizes=(256, 256),
                               input_shape=(4, 84, 84))
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
-
     algo = DQN(policy=policy,
                qf=qf,
                env_spec=env.spec,
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
-               exploration_strategy=strategy)
+               exploration_strategy=strategy,
+               n_train_steps=5,
+               buffer_batch_size=32,
+               min_buffer_size=100)
 
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=400, batch_size=100)
