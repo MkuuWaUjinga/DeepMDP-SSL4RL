@@ -3,6 +3,7 @@ This policy chooses the action that yields that has the largest Q-value.
 """
 import akro
 import numpy as np
+import torch
 
 from garage.torch.policies import Policy
 
@@ -52,9 +53,15 @@ class DiscreteQfDerivedPolicy(Policy):
             dict: Predicted action and agent information. It returns an empty
                 dict since there is no parameterization.
         """
-        q_vals = self._qf(observations)
-        opt_actions = np.argmax(q_vals, axis=1)
-        return opt_actions, dict()
+        with torch.no_grad():
+            q_vals = self._qf(observations)
+            opt_actions = np.argmax(q_vals, axis=1)
+            return opt_actions.numpy()
+
+    def reset(self, dones=None):
+        """Reset the environment."""
+        pass
+
 
     def __getstate__(self):
         """Object.__getstate__.

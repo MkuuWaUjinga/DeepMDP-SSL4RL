@@ -108,6 +108,9 @@ class DiscreteCNNQFunction(nn.Module):
 
     # pylint: disable=arguments-differ
     def forward(self, x):
+        if not torch.is_tensor(x):
+            x = torch.Tensor(x)
+        x = x.permute(0, 3, 2, 1)
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         x = self.mlp(x)
