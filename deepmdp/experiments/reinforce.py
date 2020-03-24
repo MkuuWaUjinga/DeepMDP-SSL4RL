@@ -45,8 +45,6 @@ def run_task(snapshot_config, *_):
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=400, batch_size=100)
 
-
-
 @ex.main
 def run(snapshot_config, env_name):
     snapshot_config = SnapshotConfig(snapshot_config["snapshot_dir"],
