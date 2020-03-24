@@ -15,8 +15,8 @@ class DiscreteQfDerivedPolicy(Policy):
         name (str): Name of the policy.
     """
 
-    def __init__(self, env_spec, qf, name='DiscreteQfDerivedPolicy'):
-        super().__init__(name, env_spec)
+    def __init__(self, env_spec, qf):
+        super().__init__(env_spec)
 
         assert isinstance(env_spec.action_space, akro.Discrete)
         self._env_spec = env_spec
