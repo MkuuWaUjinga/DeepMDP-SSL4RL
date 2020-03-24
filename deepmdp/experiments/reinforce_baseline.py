@@ -7,7 +7,7 @@ from garage.envs import normalize
 from garage.envs.base import GarageEnv
 from garage.experiment import SnapshotConfig
 from garage.torch.algos import VPG
-from deepmdp.garage_mod.categorical_mlp_policy import CategoricalMLPPolicy
+from deepmdp.garage_mod.policies.categorical_mlp_policy import CategoricalMLPPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.zero_baseline import ZeroBaseline
 

@@ -1,10 +1,8 @@
 import torch
 import akro
-from dowel import logger, tabular
-import numpy as np
 
 from garage.torch.policies import Policy
-from deepmdp.garage_mod.categorical_mlp_module import CategoricalMLPModule
+from deepmdp.garage_mod.policies.categorical_mlp_module import CategoricalMLPModule
 
 class CategoricalMLPPolicy(Policy, CategoricalMLPModule):
 
