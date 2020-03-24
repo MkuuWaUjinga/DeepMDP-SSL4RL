@@ -58,8 +58,7 @@ def run_task(snapshot_config, env_name):
 
     # Todo check whether it is decaying linearly or exponentially
     strategy = EpsilonGreedyStrategy(env.spec, num_timesteps, max_epsilon=1, min_epsilon=0.1)
-    #32 (4x4, with stride 2), 32 (4x4 with stride 2), 64 filters (4x4 with stride 1) and 64 filters (3x3 with stride
-#1)
+
     qf = DiscreteCNNQFunction(env_spec=env.spec,
                               filter_dims=(4, 4, 4, 3),
                               num_filters=(32, 32, 64, 64),
@@ -67,14 +66,12 @@ def run_task(snapshot_config, env_name):
                               dense_sizes=(256, 256),
                               input_shape=(4, 84, 84))
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
-    input = torch.autograd.Variable(torch.rand(1, *(4, 84, 84)))
-    print(qf(input))
 
     algo = DQN(policy=policy,
                qf=qf,
                env_spec=env.spec,
                replay_buffer=replay_buffer,
-               optimizer=torch.optim.Adam,
+               qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy)
 
     runner.setup(algo=algo, env=env)
