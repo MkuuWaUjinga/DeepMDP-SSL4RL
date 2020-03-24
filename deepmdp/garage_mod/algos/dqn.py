@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+from dowel import tabular
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 
 class DQN(OffPolicyRLAlgorithm):
@@ -20,18 +21,14 @@ class DQN(OffPolicyRLAlgorithm):
                  qf_lr=0.001,
                  qf_optimizer=torch.optim.Adam,
                  discount=1.0,
-                 target_network_update_freq=5,
-                 grad_norm_clipping=None,
                  reward_scale=1.,
                  input_include_goal=False,
                  smooth_return=True,
                  name='DQN'
                  ):
         self.qf_lr = qf_lr
-        self.qf_optimizer = qf_optimizer
+        self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
         self.name = name
-        self.target_network_update_freq = target_network_update_freq
-        self.grad_norm_clipping = grad_norm_clipping
 
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
