@@ -78,6 +78,7 @@ class DiscreteCNNQFunction(nn.Module):
         self._output_nonlinearity = output_nonlinearity
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
+        self._input_shape = input_shape
 
         super(DiscreteCNNQFunction, self).__init__()
 
@@ -88,7 +89,7 @@ class DiscreteCNNQFunction(nn.Module):
         self.cnn = nn.Sequential(*list(self.cnn_module_generator()))
 
         # Init MLP
-        flattened_input_size = self._get_conv_output(input_shape)
+        flattened_input_size = self._get_conv_output(self._input_shape)
         self.mlp = MLPModule(input_dim=flattened_input_size,
                              output_dim=action_dim,
                              hidden_sizes=list(self._dense_sizes),
@@ -130,3 +131,18 @@ class DiscreteCNNQFunction(nn.Module):
             self._hidden_b_init(conv_layer.bias)
             yield conv_layer
             yield self._cnn_hidden_nonlinearity()
+
+    def clone(self):
+        return self.__class__(env_spec=self._env_spec,
+                              input_shape=self._input_shape,
+                              filter_dims=self._filter_dims,
+                              num_filters=self._num_filters,
+                              strides=self._strides,
+                              dense_sizes=self._dense_sizes,
+                              padding_mode=self._padding_mode,
+                              hidden_nonlinearity=self._hidden_nonlinearity,
+                              hidden_w_init=self._hidden_w_init,
+                              hidden_b_init=self._hidden_b_init,
+                              output_nonlinearity=self._output_nonlinearity,
+                              output_w_init=self._output_w_init,
+                              output_b_init=self._output_b_init)
