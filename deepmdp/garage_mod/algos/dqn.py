@@ -5,6 +5,7 @@ from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.torch.utils import np_to_torch
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DQN(OffPolicyRLAlgorithm):
 
@@ -52,6 +53,8 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_qf_losses = []
         # Clone target q-network
         self.target_qf = self.qf.clone()
+        self.target_qf.to(device)
+        self.qf.to(device)
 
 
     def optimize_policy(self, itr, samples):

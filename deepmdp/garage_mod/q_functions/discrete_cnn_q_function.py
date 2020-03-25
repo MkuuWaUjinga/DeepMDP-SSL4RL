@@ -2,6 +2,9 @@ import torch
 from torch import nn
 from garage.torch.modules.mlp_module import MLPModule
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 class DiscreteCNNQFunction(nn.Module):
     """Q function based on a CNN for discrete action space.
         This class implements a Q value network to predict Q based on the
@@ -111,11 +114,12 @@ class DiscreteCNNQFunction(nn.Module):
     def forward(self, x):
         if not torch.is_tensor(x):
             x = torch.Tensor(x)
+        x = x.to(device)
         x = x.permute(0, 3, 2, 1)
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         x = self.mlp(x)
-        return x
+        return x.cpu()
 
     def cnn_module_generator(self):
         for input_dim, output_dim, filter_dim, stride in zip(
