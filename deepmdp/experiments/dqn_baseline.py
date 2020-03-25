@@ -28,13 +28,14 @@ def config():
                        "snapshot_mode": "last",
                        "snapshot_gap": 1}
     env_name = "SpaceInvaders-v0"
-    replay_buffer_size = int(1e4)
+    replay_buffer_size = int(1e6)
 
 def run_task(snapshot_config, env_name, replay_buffer_size):
     n_epochs = 400
-    steps_per_epoch = 500
+    steps_per_epoch = 20
     sampler_batch_size = 500
-    num_timesteps = n_epochs * steps_per_epoch * sampler_batch_size
+    n_train_steps = 500
+    steps = n_epochs * steps_per_epoch * sampler_batch_size
 
 
     env = (gym.make(env_name))
@@ -55,7 +56,7 @@ def run_task(snapshot_config, env_name, replay_buffer_size):
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
     # Todo check whether epsilon is decaying linearly
-    strategy = EpsilonGreedyStrategy(env.spec, num_timesteps, max_epsilon=1, min_epsilon=0.1)
+    strategy = EpsilonGreedyStrategy(env.spec, steps, max_epsilon=1, min_epsilon=0.1)
 
     qf = DiscreteCNNQFunction(env_spec=env.spec,
                               filter_dims=(4, 4, 4, 3),
@@ -70,12 +71,13 @@ def run_task(snapshot_config, env_name, replay_buffer_size):
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy,
-               n_train_steps=5,
+               n_train_steps=n_train_steps,
                buffer_batch_size=32,
-               min_buffer_size=100)
+               min_buffer_size=100,
+               n_epoch_cycles=steps_per_epoch)
 
     runner.setup(algo=algo, env=env)
-    runner.train(n_epochs=400, batch_size=100)
+    runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
 @ex.main
 def run(snapshot_config, env_name, replay_buffer_size):
