@@ -28,13 +28,13 @@ def config():
                        "snapshot_mode": "last",
                        "snapshot_gap": 1}
     env_name = "SpaceInvaders-v0"
-    replay_buffer_size = int(1e6)
-
-def run_task(snapshot_config, env_name, replay_buffer_size):
+    replay_buffer_size = int(1e3)
     n_epochs = 400
-    steps_per_epoch = 20
+    steps_per_epoch= 20
+
+def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch):
     sampler_batch_size = 500
-    n_train_steps = 500
+    n_train_steps = sampler_batch_size
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
 
@@ -80,8 +80,8 @@ def run_task(snapshot_config, env_name, replay_buffer_size):
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
 @ex.main
-def run(snapshot_config, env_name, replay_buffer_size):
+def run(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch):
     snapshot_config = SnapshotConfig(snapshot_config["snapshot_dir"],
                                      snapshot_config["snapshot_mode"],
                                      snapshot_config["snapshot_gap"])
-    run_task(snapshot_config, env_name, replay_buffer_size)
+    run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch)
