@@ -2,10 +2,8 @@ import os
 import sacred
 import gym
 import torch
-import numpy as np
 
 from garage.np.exploration_strategies.epsilon_greedy_strategy import EpsilonGreedyStrategy
-from garage.torch.algos.ddpg import DDPG
 from garage.experiment import SnapshotConfig
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.envs.wrappers.clip_reward import ClipReward
@@ -16,7 +14,6 @@ from garage.envs.wrappers.noop import Noop
 from garage.envs.wrappers.resize import Resize
 from garage.envs.wrappers.stack_frames import StackFrames
 from garage.envs import GarageEnv
-from garage.torch.q_functions.continuous_mlp_q_function import ContinuousMLPQFunction
 from deepmdp.garage_mod.env_wrappers.grayscale import Grayscale
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner

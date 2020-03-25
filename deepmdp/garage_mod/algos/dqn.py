@@ -1,9 +1,10 @@
 import torch
 import numpy as np
 
-from dowel import tabular
+from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
-from garage.torch.utils import np_to_torch, torch_to_np
+from garage.torch.utils import np_to_torch
+
 
 class DQN(OffPolicyRLAlgorithm):
 
@@ -28,16 +29,9 @@ class DQN(OffPolicyRLAlgorithm):
                  smooth_return=True,
                  name='DQN'
                  ):
-        self.qf_lr = qf_lr
-        self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
-        self.name = name
-        self.target_network_update_freq = target_network_update_freq
-        self.episode_rewards = []
-        self.episode_qf_losses = []
-
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
-                                  qf=qf,
+                                  qf=qf ,
                                   exploration_strategy=exploration_strategy,
                                   min_buffer_size=min_buffer_size,
                                   n_train_steps=n_train_steps,
@@ -50,10 +44,20 @@ class DQN(OffPolicyRLAlgorithm):
                                   reward_scale=reward_scale,
                                   input_include_goal=input_include_goal,
                                   smooth_return=smooth_return)
+        self.qf_lr = qf_lr
+        self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
+        self.name = name
+        self.target_network_update_freq = target_network_update_freq
+        self.episode_rewards = []
+        self.episode_qf_losses = []
+        # Clone target q-network
+        self.target_qf = self.qf.clone()
 
 
-    def optimize_policy(self):
+    def optimize_policy(self, itr, samples):
         """Optimize policy network."""
+        del itr
+        del samples
         action_dim = self.env_spec.action_space.n
         transitions = np_to_torch(self.replay_buffer.sample(self.buffer_batch_size))
         observations = transitions['observation']
@@ -63,7 +67,7 @@ class DQN(OffPolicyRLAlgorithm):
         dones = transitions['terminal']
 
         with torch.no_grad():
-            target_qvals = torch.max(self.qf(next_observations))
+            target_qvals = torch.max(self.target_qf(next_observations))
 
         # if done, it's just reward
         # else reward + discount * future_best_q_val
@@ -101,7 +105,7 @@ class DQN(OffPolicyRLAlgorithm):
         last_average_return = np.mean(self.episode_rewards)
         for _ in range(self.n_train_steps):
             if self._buffer_prefilled:
-                qf_loss = self.optimize_policy()
+                qf_loss = self.optimize_policy(itr, None)
                 self.episode_qf_losses.append(qf_loss)
 
         if self._buffer_prefilled:
@@ -118,10 +122,18 @@ class DQN(OffPolicyRLAlgorithm):
                 tabular.record('Episode100LossMean', mean100ep_qf_loss)
         return last_average_return
 
-    def update_target(self):
-        pass
+    def update_target(self, tau:int=1):
+        """
+        Update target network with q-network's parameters.
+        :param tau: Fraction to update. Default is hard update.
+        """
+        logger.log("Updating Q-Network")
+        for t_param, param in zip(self.target_qf.parameters(),
+                                  self.qf.parameters()):
+            t_param.data.copy_(t_param.data * (1.0 - tau) +
+                               param.data * tau)
 
     @property
     def _buffer_prefilled(self):
-        """bool: Whether first min buffer size steps is done."""
+        """Flag whether first min buffer size steps are done."""
         return self.replay_buffer.n_transitions_stored >= self.min_buffer_size
