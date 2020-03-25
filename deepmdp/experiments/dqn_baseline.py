@@ -28,8 +28,9 @@ def config():
                        "snapshot_mode": "last",
                        "snapshot_gap": 1}
     env_name = "SpaceInvaders-v0"
+    replay_buffer_size = int(1e4)
 
-def run_task(snapshot_config, env_name):
+def run_task(snapshot_config, env_name, replay_buffer_size):
     n_epochs = 400
     steps_per_epoch = 500
     sampler_batch_size = 500
@@ -41,7 +42,6 @@ def run_task(snapshot_config, env_name):
     env = MaxAndSkip(env, skip=4)
     env = EpisodicLife(env)
     if 'FIRE' in env.unwrapped.get_action_meanings():
-        # Does that mean that we should always fire if there is the action to do so?
         env = FireReset(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
@@ -52,8 +52,7 @@ def run_task(snapshot_config, env_name):
     env = GarageEnv(env)
 
     runner = LocalRunner(snapshot_config)
-    # Use buffer of size 1e7
-    replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=int(100), time_horizon=1)
+    replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
     # Todo check whether epsilon is decaying linearly
     strategy = EpsilonGreedyStrategy(env.spec, num_timesteps, max_epsilon=1, min_epsilon=0.1)
@@ -79,8 +78,8 @@ def run_task(snapshot_config, env_name):
     runner.train(n_epochs=400, batch_size=100)
 
 @ex.main
-def run(snapshot_config, env_name):
+def run(snapshot_config, env_name, replay_buffer_size):
     snapshot_config = SnapshotConfig(snapshot_config["snapshot_dir"],
                                      snapshot_config["snapshot_mode"],
                                      snapshot_config["snapshot_gap"])
-    run_task(snapshot_config, env_name)
+    run_task(snapshot_config, env_name, replay_buffer_size)
