@@ -29,7 +29,7 @@ def config():
                        "snapshot_gap": 1}
     env_name = "SpaceInvaders-v0"
     replay_buffer_size = int(1e3)
-    n_epochs = 400
+    n_epochs = 100
     steps_per_epoch= 20
 
 def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch):
@@ -46,7 +46,7 @@ def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_
         env = FireReset(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
-    # TODO check whether reward should be continuous between -1 and 1
+    # TODO check whether reward should be continuous between -1 and 1 Hitting a mothership gives more points than hitting a normal alien!
     env = ClipReward(env)
     # Create Game State
     env = StackFrames(env, 4)
@@ -59,10 +59,10 @@ def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_
     strategy = EpsilonGreedyStrategy(env.spec, steps, max_epsilon=1, min_epsilon=0.1)
 
     qf = DiscreteCNNQFunction(env_spec=env.spec,
-                              filter_dims=(4, 4, 4, 3),
-                              num_filters=(32, 32, 64, 64),
-                              strides=(2, 2, 1, 1),
-                              dense_sizes=(256, 256),
+                              filter_dims=(8, 4, 3),
+                              num_filters=(32, 64, 64),
+                              strides=(4, 2, 1),
+                              dense_sizes=(512,),
                               input_shape=(4, 84, 84))
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,
@@ -74,8 +74,8 @@ def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_
                n_train_steps=n_train_steps,
                buffer_batch_size=32,
                min_buffer_size=100,
-               n_epoch_cycles=steps_per_epoch)
-
+               n_epoch_cycles=steps_per_epoch,
+               qf_lr=0.0002)
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
