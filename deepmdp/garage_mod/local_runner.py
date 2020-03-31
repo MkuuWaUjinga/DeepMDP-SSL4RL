@@ -6,7 +6,7 @@ import time
 import uuid
 from dowel import logger, tabular
 from garage.experiment.deterministic import get_seed, set_seed
-from garage.experiment.snapshotter import Snapshotter
+from deepmdp.garage_mod.snapshotter import Snapshotter
 from pathlib import Path
 
 from deepmdp.garage_mod import parallel_sampler
