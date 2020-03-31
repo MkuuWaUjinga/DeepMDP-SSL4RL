@@ -16,11 +16,12 @@ reqs=[
     "ipython",
     "ipdb",
     "termcolor",
+    "visdom"
 ]
 
 setup(
     name='deepmdp',
-    version='0.0',
+    version='0.1.4',
     packages=['deepmdp', 'deepmdp.experiments', 'deepmdp.garage_mod', 'deepmdp.garage_mod.algos',
               'deepmdp.garage_mod.env_wrappers', 'deepmdp.garage_mod.policies', 'deepmdp.garage_mod.q_functions'],
     url='',
