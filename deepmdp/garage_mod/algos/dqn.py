@@ -4,6 +4,7 @@ import numpy as np
 from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.torch.utils import np_to_torch
+from deepmdp.experiments.utils import VisdomLinePlotter
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -55,6 +56,8 @@ class DQN(OffPolicyRLAlgorithm):
         self.target_qf = self.qf.clone()
         self.target_qf.to(device)
         self.qf.to(device)
+        self.visdom = VisdomLinePlotter(9098, xlabel="episode number")
+        logger.log(f"Number of parameter of q-network are: {sum(p.numel() for p in qf.parameters() if p.requires_grad)}")
 
 
     def optimize_policy(self, itr, samples):
@@ -72,8 +75,7 @@ class DQN(OffPolicyRLAlgorithm):
         with torch.no_grad():
             target_qvals = torch.max(self.target_qf(next_observations))
 
-        # if done, it's just reward
-        # else reward + discount * future_best_q_val
+        # if done, it's just reward else reward + discount * future_best_q_val
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
         qval = self.qf(observations)
@@ -105,6 +107,9 @@ class DQN(OffPolicyRLAlgorithm):
         epoch = itr / self.n_epoch_cycles
 
         self.episode_rewards.extend(paths['undiscounted_returns'])
+        for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
+            self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+
         last_average_return = np.mean(self.episode_rewards)
         for _ in range(self.n_train_steps):
             if self._buffer_prefilled:
@@ -117,8 +122,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         if itr % self.n_epoch_cycles == 0:
             if self._buffer_prefilled:
-                mean100ep_rewards = round(np.mean(self.episode_rewards[-100:]),
-                                          1)
+                mean100ep_rewards = round(np.mean(self.episode_rewards[-100:]), 1)
                 mean100ep_qf_loss = np.mean(self.episode_qf_losses[-100:])
                 tabular.record('Epoch', epoch)
                 tabular.record('Episode100RewardMean', mean100ep_rewards)
@@ -130,7 +134,7 @@ class DQN(OffPolicyRLAlgorithm):
         Update target network with q-network's parameters.
         :param tau: Fraction to update. Default is hard update.
         """
-        logger.log("Updating Q-Network")
+        logger.log("Updating target Q-Network")
         for t_param, param in zip(self.target_qf.parameters(),
                                   self.qf.parameters()):
             t_param.data.copy_(t_param.data * (1.0 - tau) +
