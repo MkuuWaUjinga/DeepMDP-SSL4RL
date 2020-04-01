@@ -29,7 +29,6 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  input_include_goal=False,
                  smooth_return=True,
-                 name='DQN'
                  ):
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
@@ -48,7 +47,6 @@ class DQN(OffPolicyRLAlgorithm):
                                   smooth_return=smooth_return)
         self.qf_lr = qf_lr
         self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
-        self.name = name
         self.target_network_update_freq = target_network_update_freq
         self.episode_rewards = []
         self.episode_qf_losses = []
@@ -106,6 +104,7 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
+        # TODO log std and mean of q values for each episode as well. Use agent_infos or paths for info passing.
         self.episode_rewards.extend(paths['undiscounted_returns'])
         for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
             self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
@@ -144,3 +143,14 @@ class DQN(OffPolicyRLAlgorithm):
     def _buffer_prefilled(self):
         """Flag whether first min buffer size steps are done."""
         return self.replay_buffer.n_transitions_stored >= self.min_buffer_size
+
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        data = self.__dict__.copy()
+        del data['visdom']
+        return data
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        self.__dict__ = state
+        self.visdom = VisdomLinePlotter(9098, xlabel="episode number")
