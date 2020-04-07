@@ -71,7 +71,9 @@ class DQN(OffPolicyRLAlgorithm):
         dones = transitions['terminal']
 
         with torch.no_grad():
-            target_qvals = torch.max(self.target_qf(next_observations))
+            target_qvals = self.target_qf(next_observations)
+            target_qvals, _ =  torch.max(target_qvals, dim=1)
+            assert target_qvals.size(0) == self.buffer_batch_size, "number of target qvals has to equal batch size"
 
         # if done, it's just reward else reward + discount * future_best_q_val
         target = rewards + (1.0 - dones) * self.discount * target_qvals
