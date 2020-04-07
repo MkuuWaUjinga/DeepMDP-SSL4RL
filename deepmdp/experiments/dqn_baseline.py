@@ -31,14 +31,10 @@ def config():
     replay_buffer_size = int(1e3)
     n_epochs = 100
     steps_per_epoch= 20
-
-def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch):
     sampler_batch_size = 500
-    n_train_steps = sampler_batch_size
-    steps = n_epochs * steps_per_epoch * sampler_batch_size
 
-
-    env = (gym.make(env_name))
+def setup_atari_env(env_name):
+    env = gym.make(env_name)
     env = Noop(env, noop_max=30)
     env = MaxAndSkip(env, skip=4)
     env = EpisodicLife(env)
@@ -50,8 +46,12 @@ def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_
     env = ClipReward(env)
     # Create Game State
     env = StackFrames(env, 4)
-    env = GarageEnv(env)
+    return GarageEnv(env)
 
+def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch, sampler_batch_size):
+    steps = n_epochs * steps_per_epoch * sampler_batch_size
+    n_train_steps = sampler_batch_size
+    env = setup_atari_env(env_name)
     runner = LocalRunner(snapshot_config)
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
@@ -80,8 +80,8 @@ def run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
 @ex.main
-def run(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch):
+def run(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch, sampler_batch_size):
     snapshot_config = SnapshotConfig(snapshot_config["snapshot_dir"],
                                      snapshot_config["snapshot_mode"],
                                      snapshot_config["snapshot_gap"])
-    run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch)
+    run_task(snapshot_config, env_name, replay_buffer_size, n_epochs, steps_per_epoch, sampler_batch_size)
