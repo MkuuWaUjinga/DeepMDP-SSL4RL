@@ -91,7 +91,7 @@ class DiscreteCNNQFunction(nn.Module):
         # Init Cnn
         self.cnn = nn.Sequential(*list(self.cnn_module_generator()))
 
-        # Init MLP
+        # Init Mlp
         flattened_input_size = self._get_conv_output(self._input_shape)
         self.mlp = MLPModule(input_dim=flattened_input_size,
                              output_dim=action_dim,
@@ -115,7 +115,8 @@ class DiscreteCNNQFunction(nn.Module):
         if not torch.is_tensor(x):
             x = torch.Tensor(x)
         x = x.to(device)
-        x = x.permute(0, 3, 2, 1)
+        if len(x.size()) == 4:
+            x = x.permute(0, 3, 2, 1)
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         x = self.mlp(x)
