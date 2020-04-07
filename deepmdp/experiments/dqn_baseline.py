@@ -35,7 +35,19 @@ def config():
         "steps_per_epoch": 20,
         "sampler_batch_size": 500,
         "learning_rate": 0.0002,
-        "buffer_batch_size": 32
+        "buffer_batch_size": 32,
+        "net": {
+            "filter_dims": (8,4,3),
+            "num_filters": (32, 64, 64),
+            "strides": (4, 2, 1),
+            "dense_sizes": (512, ),
+            "input_shape": (4, 84, 84)
+        },
+        "epsilon_greedy": {
+            "max_epsilon": 1.0,
+            "min_epsilon": 0.1,
+            "decay_ratio": 0.1,
+        }
     }
 
 
@@ -66,6 +78,8 @@ def run_task(snapshot_config, env_name, dqn_config):
     sampler_batch_size = dqn_config.get("sampler_batch_size")
     learning_rate = dqn_config.get("learning_rate")
     buffer_batch_size = dqn_config.get("buffer_batch_size")
+    net_config = dqn_config.get("net")
+    epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
     n_train_steps = sampler_batch_size
 
@@ -78,14 +92,10 @@ def run_task(snapshot_config, env_name, dqn_config):
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
     # Todo check whether epsilon is decaying linearly
-    strategy = EpsilonGreedyStrategy(env.spec, steps, max_epsilon=1, min_epsilon=0.1)
-
+    strategy = EpsilonGreedyStrategy(env.spec, steps, **epsilon_greedy_config)
+    print(strategy._min_epsilon)
     qf = DiscreteCNNQFunction(env_spec=env.spec,
-                              filter_dims=(),
-                              num_filters=(),
-                              strides=(),
-                              dense_sizes=(512, 256),
-                              input_shape=(8,))
+                              **net_config)
     print(qf)
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,

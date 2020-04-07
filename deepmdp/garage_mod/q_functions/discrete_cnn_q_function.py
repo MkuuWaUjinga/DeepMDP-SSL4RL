@@ -54,11 +54,11 @@ class DiscreteCNNQFunction(nn.Module):
         """
     def __init__(self,
                  env_spec,
-                 filter_dims,
-                 num_filters,
-                 strides,
-                 dense_sizes,
-                 input_shape,
+                 filter_dims=None,
+                 num_filters=None,
+                 strides=None,
+                 dense_sizes=None,
+                 input_shape=None,
                  padding_mode='same',
                  cnn_hidden_nonlinearity=nn.ReLU,
                  hidden_nonlinearity=nn.ReLU,
@@ -69,10 +69,10 @@ class DiscreteCNNQFunction(nn.Module):
                  output_b_init=torch.nn.init.zeros_):
         self._env_spec = env_spec
         self._action_dim = env_spec.action_space.n
-        self._filter_dims = filter_dims
-        self._num_filters = num_filters
-        self._strides = strides
-        self._dense_sizes = dense_sizes
+        self._filter_dims = tuple(filter_dims)
+        self._num_filters = tuple(num_filters)
+        self._strides = tuple(strides)
+        self._dense_sizes = tuple(dense_sizes)
         self._padding_mode = padding_mode
         self._cnn_hidden_nonlinearity = cnn_hidden_nonlinearity
         self._hidden_nonlinearity = hidden_nonlinearity
@@ -81,7 +81,7 @@ class DiscreteCNNQFunction(nn.Module):
         self._output_nonlinearity = output_nonlinearity
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
-        self._input_shape = input_shape
+        self._input_shape = tuple(input_shape)
 
         super(DiscreteCNNQFunction, self).__init__()
 
