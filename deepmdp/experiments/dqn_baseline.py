@@ -3,6 +3,7 @@ import sacred
 import gym
 import torch
 
+from dowel import logger
 from garage.np.exploration_strategies.epsilon_greedy_strategy import EpsilonGreedyStrategy
 from garage.experiment import SnapshotConfig
 from garage.replay_buffer import SimpleReplayBuffer
@@ -12,14 +13,15 @@ from garage.envs.wrappers.max_and_skip import MaxAndSkip
 from garage.envs.wrappers.fire_reset import FireReset
 from garage.envs.wrappers.noop import Noop
 from garage.envs.wrappers.resize import Resize
+from garage.experiment.deterministic import get_seed
 from garage.envs.wrappers.stack_frames import StackFrames
 from garage.envs import GarageEnv
+
 from deepmdp.garage_mod.env_wrappers.grayscale import Grayscale
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
-from dowel import logger
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
 
@@ -60,9 +62,7 @@ def setup_atari_env(env_name):
         env = FireReset(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
-    # TODO check whether reward should be continuous between -1 and 1 Hitting a mothership gives more points than hitting a normal alien!
     env = ClipReward(env)
-    # Create Game State
     env = StackFrames(env, 4)
     return GarageEnv(env)
 
@@ -87,16 +87,17 @@ def run_task(snapshot_config, env_name, dqn_config):
         env = GarageEnv(env_name="LunarLander-v2")
     else:
         env = setup_atari_env(env_name)
+    # Set env seed
+    env.seed(get_seed())
+    # Set seed for action space (needed for epsilon-greedy reproducability)
+    env.action_space.seed(get_seed())
 
     runner = LocalRunner(snapshot_config)
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
-    # Todo check whether epsilon is decaying linearly
     strategy = EpsilonGreedyStrategy(env.spec, steps, **epsilon_greedy_config)
-    print(strategy._min_epsilon)
     qf = DiscreteCNNQFunction(env_spec=env.spec,
                               **net_config)
-    print(qf)
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,
                qf=qf,
