@@ -4,7 +4,6 @@ import gym
 import torch
 
 from dowel import logger
-from garage.np.exploration_strategies.epsilon_greedy_strategy import EpsilonGreedyStrategy
 from garage.experiment import SnapshotConfig
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.envs.wrappers.clip_reward import ClipReward
@@ -13,11 +12,13 @@ from garage.envs.wrappers.max_and_skip import MaxAndSkip
 from garage.envs.wrappers.fire_reset import FireReset
 from garage.envs.wrappers.noop import Noop
 from garage.envs.wrappers.resize import Resize
+from garage.envs.wrappers.grayscale import Grayscale
 from garage.experiment.deterministic import get_seed
 from garage.envs.wrappers.stack_frames import StackFrames
 from garage.envs import GarageEnv
 
-from deepmdp.garage_mod.env_wrappers.grayscale import Grayscale
+from deepmdp.garage_mod.off_policy_vectorized_sampler import OffPolicyVectorizedSampler
+from deepmdp.garage_mod.exploration_strategies.epsilon_greedy_strategy import EpsilonGreedyStrategy
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
@@ -110,6 +111,9 @@ def run_task(snapshot_config, env_name, dqn_config):
                min_buffer_size=100,
                n_epoch_cycles=steps_per_epoch,
                qf_lr=learning_rate)
+    # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
+    algo.sampler_cls = OffPolicyVectorizedSampler
+
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 

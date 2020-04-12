@@ -4,6 +4,7 @@ import numpy as np
 from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.torch.utils import np_to_torch
+from garage.misc.tensor_utils import normalize_pixel_batch
 from deepmdp.experiments.utils import VisdomLinePlotter
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -49,6 +50,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
         self.target_network_update_freq = target_network_update_freq
         self.episode_rewards = []
+        self.episode_mean_q_vals = []
         self.episode_qf_losses = []
         # Clone target q-network
         self.target_qf = self.qf.clone()
@@ -70,6 +72,10 @@ class DQN(OffPolicyRLAlgorithm):
         next_observations = transitions['next_observation']
         dones = transitions['terminal']
 
+        # Obs. are stored in uint8 format in replay buffer to optimize memore.
+        # Convert pixel values to [0,1] for training.
+        observations = normalize_pixel_batch(self.env_spec, observations)
+        next_observations = normalize_pixel_batch(self.env_spec, observations)
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
             target_qvals, _ =  torch.max(target_qvals, dim=1)
@@ -106,10 +112,13 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
-        # TODO log std and mean of q values for each episode as well. Use agent_infos or paths for info passing.
+        # TODO log std q values for each episode as well. Log correlation between episode reward and q-value to see
+        # wether the agent's estimation of value was correct.
         self.episode_rewards.extend(paths['undiscounted_returns'])
+        self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
         for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
-            self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+            self.visdom.plot("episode reward".format(self.qf_lr), "rewards", "Rewards per episode", i, self.episode_rewards[i])
+            self.visdom.plot("episode q-values".format(self.qf_lr), "q-values", "Mean q-values per episode", i, self.episode_mean_q_vals[i])
 
         last_average_return = np.mean(self.episode_rewards)
         for _ in range(self.n_train_steps):
@@ -124,8 +133,10 @@ class DQN(OffPolicyRLAlgorithm):
         if itr % self.n_epoch_cycles == 0:
             if self._buffer_prefilled:
                 mean100ep_rewards = round(np.mean(self.episode_rewards[-100:]), 1)
+                mean100ep_q_vals = round(np.mean(self.episode_mean_q_vals[-100:]), 1)
                 mean100ep_qf_loss = np.mean(self.episode_qf_losses[-100:])
                 tabular.record('Epoch', epoch)
+                tabular.record("Episode100QValuesMean", mean100ep_q_vals)
                 tabular.record('Episode100RewardMean', mean100ep_rewards)
                 tabular.record('Episode100LossMean', mean100ep_qf_loss)
         return last_average_return
