@@ -75,7 +75,7 @@ class DQN(OffPolicyRLAlgorithm):
         # Obs. are stored in uint8 format in replay buffer to optimize memore.
         # Convert pixel values to [0,1] for training.
         observations = normalize_pixel_batch(self.env_spec, observations)
-        next_observations = normalize_pixel_batch(self.env_spec, observations)
+        next_observations = normalize_pixel_batch(self.env_spec, next_observations)
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
             target_qvals, _ =  torch.max(target_qvals, dim=1)
