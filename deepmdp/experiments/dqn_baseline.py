@@ -41,7 +41,7 @@ def config():
         "buffer_batch_size": 32,
         "target_network_update_freq": 5,
         "net": {
-            "filter_dims": (8,4,3),
+            "filter_dims": (8, 4, 3),
             "num_filters": (32, 64, 64),
             "strides": (4, 2, 1),
             "dense_sizes": (512, ),
