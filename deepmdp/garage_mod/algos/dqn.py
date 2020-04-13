@@ -3,7 +3,6 @@ import numpy as np
 
 from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
-from garage.torch.utils import np_to_torch
 from garage.misc.tensor_utils import normalize_pixel_batch
 from deepmdp.experiments.utils import VisdomLinePlotter
 
@@ -180,6 +179,7 @@ class DQN(OffPolicyRLAlgorithm):
         Update target network with q-network's parameters.
         :param tau: Fraction to update. Default is hard update.
         """
+        logger.log("Updating target network")
         for t_param, param in zip(self.target_qf.parameters(),
                                   self.qf.parameters()):
             t_param.data.copy_(t_param.data * (1.0 - tau) +
