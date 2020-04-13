@@ -52,6 +52,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_rewards = []
         self.episode_mean_q_vals = []
         self.episode_qf_losses = []
+        self.episode_std_q_vals = []
         # Clone target q-network
         self.target_qf = self.qf.clone()
         self.target_qf.to(device)
@@ -112,13 +113,14 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
-        # TODO log std q values for each episode as well. Log correlation between episode reward and q-value to see
         # wether the agent's estimation of value was correct.
         self.episode_rewards.extend(paths['undiscounted_returns'])
         self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
+        self.episode_std_q_vals.extend(paths['episode_std_q_vals'])
         for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
-            self.visdom.plot("episode reward".format(self.qf_lr), "rewards", "Rewards per episode", i, self.episode_rewards[i])
-            self.visdom.plot("episode q-values".format(self.qf_lr), "q-values", "Mean q-values per episode", i, self.episode_mean_q_vals[i])
+            self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+            self.visdom.plot("episode mean q-values", "q-values", "Mean q-values per episode", i, self.episode_mean_q_vals[i])
+            self.visdom.plot("episode std q-values", "q-std", "Std of q-values per episode", i, self.episode_std_q_vals[i])
 
         last_average_return = np.mean(self.episode_rewards)
         for _ in range(self.n_train_steps):
@@ -140,6 +142,38 @@ class DQN(OffPolicyRLAlgorithm):
                 tabular.record('Episode100RewardMean', mean100ep_rewards)
                 tabular.record('Episode100LossMean', mean100ep_qf_loss)
         return last_average_return
+
+    def process_samples(self, itr, paths):
+        """Return processed sample data based on the collected paths.
+
+        Args:
+            itr (int): Iteration number.
+            paths (list[dict]): A list of collected paths.
+
+        Returns:
+            dict: Processed sample data, with keys
+                * undiscounted_returns (list[float])
+                * success_history (list[float])
+                * complete (list[bool])
+
+        """
+        success_history = [
+            path['success_count'] / path['running_length'] for path in paths
+        ]
+        undiscounted_returns = [path['undiscounted_return'] for path in paths]
+        episode_mean_q_vals = [np.mean(path['q_vals']) for path in paths]
+        episode_std_q_vals = [np.std(path["q_vals"]) for path in paths]
+
+        # check if the last path is complete
+        complete = [path['dones'][-1] for path in paths]
+
+        samples_data = dict(undiscounted_returns=undiscounted_returns,
+                            episode_mean_q_vals=episode_mean_q_vals,
+                            episode_std_q_vals=episode_std_q_vals,
+                            success_history=success_history,
+                            complete=complete)
+
+        return samples_data
 
     def update_target(self, tau:int=1):
         """

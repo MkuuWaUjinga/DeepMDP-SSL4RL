@@ -40,7 +40,6 @@ class OffPolicyVectorizedSampler(BatchSampler):
         self._last_uncounted_discount = [0] * n_envs
         self._last_running_length = [0] * n_envs
         self._last_success_count = [0] * n_envs
-        self._last_q_vals = [0] * n_envs
         self.env_spec = self.env.spec
         self.vec_env = None
 
@@ -143,7 +142,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                         rewards=[],
                         env_infos=[],
                         dones=[],
-                        q_vals=self._last_q_vals[idx],
+                        q_vals=[],
                         undiscounted_return=self._last_uncounted_discount[idx],
                         # running_length: Length of path up to now
                         # Note that running_length is not len(rewards)
@@ -154,13 +153,12 @@ class OffPolicyVectorizedSampler(BatchSampler):
                 running_paths[idx]['rewards'].append(reward)
                 running_paths[idx]['env_infos'].append(env_info)
                 running_paths[idx]['dones'].append(done)
-                running_paths[idx]['q_vals'] += q_val
+                running_paths[idx]['q_vals'].append(q_val)
                 running_paths[idx]['running_length'] += 1
                 running_paths[idx]['undiscounted_return'] += reward
                 running_paths[idx]['success_count'] += env_info.get(
                     'is_success') or 0
 
-                self._last_q_vals[idx] += q_val
                 self._last_uncounted_discount[idx] += reward
                 self._last_success_count[idx] += env_info.get(
                     'is_success') or 0
@@ -173,7 +171,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                             dones=np.asarray(running_paths[idx]['dones']),
                             env_infos=tensor_utils.stack_tensor_dict_list(
                                 running_paths[idx]['env_infos']),
-                            q_vals=running_paths[idx]["q_vals"],
+                            q_vals=np.asarray(running_paths[idx]["q_vals"]),
                             running_length=running_paths[idx]
                             ['running_length'],
                             undiscounted_return=running_paths[idx]
@@ -185,7 +183,6 @@ class OffPolicyVectorizedSampler(BatchSampler):
                         self._last_running_length[idx] = 0
                         self._last_success_count[idx] = 0
                         self._last_uncounted_discount[idx] = 0
-                        self._last_q_vals[idx] = 0
 
                     if self.algo.es:
                         self.algo.es.reset()
