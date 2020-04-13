@@ -21,9 +21,10 @@ reqs=[
 
 setup(
     name='deepmdp',
-    version='0.1.7',
+    version='0.1.8',
     packages=['deepmdp', 'deepmdp.experiments', 'deepmdp.garage_mod', 'deepmdp.garage_mod.algos',
-              'deepmdp.garage_mod.env_wrappers', 'deepmdp.garage_mod.policies', 'deepmdp.garage_mod.q_functions'],
+              'deepmdp.garage_mod.env_wrappers', 'deepmdp.garage_mod.policies', 'deepmdp.garage_mod.q_functions',
+              'deepmdp.garage_mod.exploration_strategies'],
     url='',
     license='',
     author='',
