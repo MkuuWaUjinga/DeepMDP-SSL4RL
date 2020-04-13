@@ -93,7 +93,7 @@ class DQN(OffPolicyRLAlgorithm):
         actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
         q_selected = torch.sum(qval*actions, axis=1)
 
-        qf_loss = torch.nn.MSELoss()
+        qf_loss = torch.nn.SmoothL1Loss()
         qval_loss = qf_loss(q_selected, target)
         self.qf_optimizer.zero_grad()
         qval_loss.backward()
