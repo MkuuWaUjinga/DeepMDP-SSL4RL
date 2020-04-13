@@ -113,7 +113,7 @@ class DiscreteCNNQFunction(nn.Module):
     # pylint: disable=arguments-differ
     def forward(self, x):
         if not torch.is_tensor(x):
-            x = torch.Tensor(x)
+            x = torch.FloatTensor(x)
         x = x.to(device)
         if len(x.size()) == 4:
             x = x.permute(0, 3, 2, 1)

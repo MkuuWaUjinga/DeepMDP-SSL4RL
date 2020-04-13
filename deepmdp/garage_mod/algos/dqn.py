@@ -66,14 +66,14 @@ class DQN(OffPolicyRLAlgorithm):
         del itr
         del samples
         action_dim = self.env_spec.action_space.n
-        transitions = np_to_torch(self.replay_buffer.sample(self.buffer_batch_size))
+        transitions = self.replay_buffer.sample(self.buffer_batch_size)
         observations = transitions['observation']
-        rewards = transitions['reward']
-        actions = transitions['action']
+        rewards = torch.FloatTensor(transitions['reward'])
+        actions = torch.FloatTensor(transitions['action'])
         next_observations = transitions['next_observation']
-        dones = transitions['terminal']
+        dones = torch.FloatTensor(transitions['terminal'])
 
-        # Obs. are stored in uint8 format in replay buffer to optimize memore.
+        # Obs. are stored in uint8 format in replay buffer to optimize memory.
         # Convert pixel values to [0,1] for training if env's obs are images.
         observations = normalize_pixel_batch(self.env_spec, observations)
         next_observations = normalize_pixel_batch(self.env_spec, next_observations)
@@ -86,7 +86,7 @@ class DQN(OffPolicyRLAlgorithm):
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
         qval = self.qf(observations)
-        actions = self.one_hot(actions, action_dim)
+        actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
         q_selected = torch.sum(qval*actions, axis=1)
 
         qf_loss = torch.nn.MSELoss()
