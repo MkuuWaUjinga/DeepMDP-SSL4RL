@@ -40,6 +40,7 @@ def config():
         "learning_rate": 0.0002,
         "buffer_batch_size": 32,
         "target_network_update_freq": 5,
+        "min_buffer_size": 50000,
         "net": {
             "filter_dims": (8, 4, 3),
             "num_filters": (32, 64, 64),
@@ -81,6 +82,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     learning_rate = dqn_config.get("learning_rate")
     buffer_batch_size = dqn_config.get("buffer_batch_size")
     target_network_update_freq = dqn_config.get("target_network_update_freq")
+    min_buffer_size = dqn_config.get("min_buffer_size")
     net_config = dqn_config.get("net")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
@@ -110,7 +112,7 @@ def run_task(snapshot_config, env_name, dqn_config):
                exploration_strategy=strategy,
                n_train_steps=n_train_steps,
                buffer_batch_size=buffer_batch_size,
-               min_buffer_size=100,
+               min_buffer_size=min_buffer_size,
                n_epoch_cycles=steps_per_epoch,
                target_network_update_freq=target_network_update_freq,
                qf_lr=learning_rate)
