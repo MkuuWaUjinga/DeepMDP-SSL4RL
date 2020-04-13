@@ -55,7 +55,7 @@ class DiscreteQfDerivedPolicy(Policy):
                 dict since there is no parameterization.
         """
         with torch.no_grad():
-            q_vals = self._qf(observations).numpy()
+            q_vals = self._qf(observations).cpu().numpy()
             opt_actions = np.argmax(q_vals, axis=1)
             q_vals = np.amax(q_vals, axis=1)
             return opt_actions, {"q_vals": q_vals}

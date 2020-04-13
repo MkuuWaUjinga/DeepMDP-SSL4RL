@@ -120,7 +120,7 @@ class DiscreteCNNQFunction(nn.Module):
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         x = self.mlp(x)
-        return x.cpu()
+        return x
 
     def cnn_module_generator(self):
         for input_dim, output_dim, filter_dim, stride in zip(
