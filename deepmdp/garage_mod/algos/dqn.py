@@ -4,6 +4,7 @@ import numpy as np
 from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.misc.tensor_utils import normalize_pixel_batch
+from garage.torch.utils import np_to_torch
 from deepmdp.experiments.utils import VisdomLinePlotter
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -66,16 +67,20 @@ class DQN(OffPolicyRLAlgorithm):
         del samples
         action_dim = self.env_spec.action_space.n
         transitions = self.replay_buffer.sample(self.buffer_batch_size)
-        observations = transitions['observation']
-        rewards = torch.FloatTensor(transitions['reward'])
-        actions = torch.FloatTensor(transitions['action'])
-        next_observations = transitions['next_observation']
-        dones = torch.FloatTensor(transitions['terminal'])
 
         # Obs. are stored in uint8 format in replay buffer to optimize memory.
         # Convert pixel values to [0,1] for training if env's obs are images.
-        observations = normalize_pixel_batch(self.env_spec, observations)
-        next_observations = normalize_pixel_batch(self.env_spec, next_observations)
+        transitions["observation"] = np.array(normalize_pixel_batch(self.env_spec, transitions["observation"]))
+        transitions["next_observation"] = np.asarray(normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
+        # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
+        # creation around 10 times faster.
+        transitions = np_to_torch(transitions)
+        observations = transitions['observation']
+        rewards = transitions['reward'].to(device)
+        actions = transitions['action'].to(device)
+        next_observations = transitions['next_observation']
+        dones = transitions['terminal'].to(device)
+
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
             target_qvals, _ =  torch.max(target_qvals, dim=1)
