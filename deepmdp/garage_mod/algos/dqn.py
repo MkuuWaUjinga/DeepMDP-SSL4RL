@@ -98,7 +98,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.qf_optimizer.zero_grad()
         qval_loss.backward()
         self.qf_optimizer.step()
-        return qval_loss.detach()
+        return qval_loss.cpu().detach()
 
     def one_hot(self, action, action_dim):
         y_onehot = torch.FloatTensor(self.buffer_batch_size, action_dim).to(device)
