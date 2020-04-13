@@ -40,9 +40,10 @@ class DiscreteQfDerivedPolicy(Policy):
             dict: Predicted action and agent information. It returns an empty
                 dict since there is no parameterization.
         """
-        q_vals = self._qf([observation])
-        opt_action = np.argmax(q_vals)
-        return opt_action, dict()
+        with torch.no_grad():
+            q_vals = self._qf([observation])
+            opt_action = np.argmax(q_vals)
+            return opt_action, dict()
 
     def get_actions(self, observations):
         """Get actions from this policy for the input observations.
