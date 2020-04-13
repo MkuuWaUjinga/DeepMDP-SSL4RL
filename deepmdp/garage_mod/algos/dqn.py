@@ -73,7 +73,7 @@ class DQN(OffPolicyRLAlgorithm):
         dones = transitions['terminal']
 
         # Obs. are stored in uint8 format in replay buffer to optimize memore.
-        # Convert pixel values to [0,1] for training.
+        # Convert pixel values to [0,1] for training if env's obs are images.
         observations = normalize_pixel_batch(self.env_spec, observations)
         next_observations = normalize_pixel_batch(self.env_spec, next_observations)
         with torch.no_grad():
@@ -146,7 +146,6 @@ class DQN(OffPolicyRLAlgorithm):
         Update target network with q-network's parameters.
         :param tau: Fraction to update. Default is hard update.
         """
-        logger.log("Updating target Q-Network")
         for t_param, param in zip(self.target_qf.parameters(),
                                   self.qf.parameters()):
             t_param.data.copy_(t_param.data * (1.0 - tau) +
