@@ -62,7 +62,7 @@ class DQN(OffPolicyRLAlgorithm):
 
 
     def optimize_policy(self, itr, samples):
-        """Optimize policy network."""
+        """Optimize q-network."""
         del itr
         del samples
         action_dim = self.env_spec.action_space.n
@@ -86,7 +86,7 @@ class DQN(OffPolicyRLAlgorithm):
             target_qvals, _ =  torch.max(target_qvals, dim=1)
             assert target_qvals.size(0) == self.buffer_batch_size, "number of target qvals has to equal batch size"
 
-        # if done, it's just reward else reward + discount * future_best_q_val
+        # if done, it's just reward else reward + discount * target_qvals
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
         qval = self.qf(observations)
@@ -117,7 +117,7 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
-        # wether the agent's estimation of value was correct.
+        # log correlation between reward and q-value to see whether the agent's estimation of value was correct.
         self.episode_rewards.extend(paths['undiscounted_returns'])
         self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
         self.episode_std_q_vals.extend(paths['episode_std_q_vals'])
