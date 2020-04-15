@@ -37,6 +37,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
         self.no_reset = no_reset
 
         self._last_obses = None
+        self._last_q_vals = {i : [] for i in range(n_envs)}
         self._last_uncounted_discount = [0] * n_envs
         self._last_running_length = [0] * n_envs
         self._last_success_count = [0] * n_envs
@@ -142,7 +143,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                         rewards=[],
                         env_infos=[],
                         dones=[],
-                        q_vals=[],
+                        q_vals=self._last_q_vals[idx].copy(),
                         undiscounted_return=self._last_uncounted_discount[idx],
                         # running_length: Length of path up to now
                         # Note that running_length is not len(rewards)
@@ -159,6 +160,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                 running_paths[idx]['success_count'] += env_info.get(
                     'is_success') or 0
 
+                self._last_q_vals[idx].append(q_val)
                 self._last_uncounted_discount[idx] += reward
                 self._last_success_count[idx] += env_info.get(
                     'is_success') or 0
@@ -180,6 +182,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     running_paths[idx] = None
 
                     if done:
+                        self._last_q_vals[idx] = []
                         self._last_running_length[idx] = 0
                         self._last_success_count[idx] = 0
                         self._last_uncounted_discount[idx] = 0
