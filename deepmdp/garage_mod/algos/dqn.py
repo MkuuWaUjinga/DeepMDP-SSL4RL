@@ -157,25 +157,16 @@ class DQN(OffPolicyRLAlgorithm):
         Returns:
             dict: Processed sample data, with keys
                 * undiscounted_returns (list[float])
-                * success_history (list[float])
-                * complete (list[bool])
-
+                * episode_mean_q_vals (list[float])
+                * episode_std_q_vals (list[float])
         """
-        success_history = [
-            path['success_count'] / path['running_length'] for path in paths
-        ]
-        undiscounted_returns = [path['undiscounted_return'] for path in paths]
-        episode_mean_q_vals = [np.mean(path['q_vals']) for path in paths]
-        episode_std_q_vals = [np.std(path["q_vals"]) for path in paths]
-
-        # check if the last path is complete
-        complete = [path['dones'][-1] for path in paths]
+        undiscounted_returns = [path['undiscounted_return'] for path in paths if path['dones'][-1]]
+        episode_mean_q_vals = [np.mean(path['q_vals']) for path in paths if path['dones'][-1]]
+        episode_std_q_vals = [np.std(path["q_vals"]) for path in paths if path['dones'][-1]]
 
         samples_data = dict(undiscounted_returns=undiscounted_returns,
                             episode_mean_q_vals=episode_mean_q_vals,
-                            episode_std_q_vals=episode_std_q_vals,
-                            success_history=success_history,
-                            complete=complete)
+                            episode_std_q_vals=episode_std_q_vals)
 
         return samples_data
 
@@ -184,7 +175,6 @@ class DQN(OffPolicyRLAlgorithm):
         Update target network with q-network's parameters.
         :param tau: Fraction to update. Default is hard update.
         """
-        logger.log("Updating target network")
         for t_param, param in zip(self.target_qf.parameters(),
                                   self.qf.parameters()):
             t_param.data.copy_(t_param.data * (1.0 - tau) +
