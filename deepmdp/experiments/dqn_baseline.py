@@ -37,10 +37,11 @@ def config():
         "n_epochs": 100,
         "steps_per_epoch": 20,
         "sampler_batch_size": 500,
+        "n_train_steps": 500,
         "learning_rate": 0.0002,
         "buffer_batch_size": 32,
         "target_network_update_freq": 5,
-        "min_buffer_size": 50000,
+        "min_buffer_size": 100,
         "net": {
             "filter_dims": (8, 4, 3),
             "num_filters": (32, 64, 64),
@@ -52,6 +53,8 @@ def config():
             "max_epsilon": 1.0,
             "min_epsilon": 0.1,
             "decay_ratio": 0.1,
+            "exponential_decay_rate": None, # Do linear decay with above params
+            "episodical_decay": False
         }
     }
 
@@ -61,6 +64,7 @@ def setup_atari_env(env_name):
     env = Noop(env, noop_max=30)
     env = MaxAndSkip(env, skip=4)
     env = EpisodicLife(env)
+    # Fire on reset as some envs are fixed until firing
     if 'FIRE' in env.unwrapped.get_action_meanings():
         env = FireReset(env)
     env = Grayscale(env)
@@ -79,6 +83,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     n_epochs = dqn_config.get("n_epochs")
     steps_per_epoch = dqn_config.get("steps_per_epoch")
     sampler_batch_size = dqn_config.get("sampler_batch_size")
+    n_train_steps = dqn_config.get("n_train_steps")
     learning_rate = dqn_config.get("learning_rate")
     buffer_batch_size = dqn_config.get("buffer_batch_size")
     target_network_update_freq = dqn_config.get("target_network_update_freq")
@@ -86,7 +91,6 @@ def run_task(snapshot_config, env_name, dqn_config):
     net_config = dqn_config.get("net")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
-    n_train_steps = sampler_batch_size
 
     if not is_atari(env_name):
         env = GarageEnv(env_name="LunarLander-v2")
@@ -115,12 +119,15 @@ def run_task(snapshot_config, env_name, dqn_config):
                min_buffer_size=min_buffer_size,
                n_epoch_cycles=steps_per_epoch,
                target_network_update_freq=target_network_update_freq,
-               qf_lr=learning_rate)
+               qf_lr=learning_rate,
+               max_path_length=1000)
     # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
     algo.sampler_cls = OffPolicyVectorizedSampler
 
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
+
+    env.close()
 
 @ex.main
 def run(snapshot_config, env_name, dqn_config):
