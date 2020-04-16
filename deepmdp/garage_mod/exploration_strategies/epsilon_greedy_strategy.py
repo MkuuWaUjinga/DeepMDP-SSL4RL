@@ -33,15 +33,21 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
                  total_timesteps,
                  max_epsilon=1.0,
                  min_epsilon=0.02,
-                 decay_ratio=0.1):
+                 decay_ratio=0.1,
+                 episodical_decay=False,
+                 exponential_decay_rate=None):
         self._env_spec = env_spec
         self._max_epsilon = max_epsilon
         self._min_epsilon = min_epsilon
-        self._decay_period = int(total_timesteps * decay_ratio)
         self._action_space = env_spec.action_space
         self._epsilon = self._max_epsilon
-        self._decrement = (self._max_epsilon -
-                           self._min_epsilon) / self._decay_period
+        self._episodical_decay = episodical_decay
+        if exponential_decay_rate is None:
+            self._decay_period = int(total_timesteps * decay_ratio)
+            self._decrement = (self._max_epsilon -
+                               self._min_epsilon) / self._decay_period
+        else:
+            self._decay_rate = exponential_decay_rate
 
     def get_action(self, t, observation, policy, **kwargs):
         """
@@ -83,6 +89,12 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
                 opt_actions[itr] = self._action_space.sample()
         return opt_actions, agent_infos
 
-    def _decay(self):
+    def _decay(self, episode_done=None):
         if self._epsilon > self._min_epsilon:
-            self._epsilon -= self._decrement
+            if not self._episodical_decay or self._episodical_decay and episode_done:
+                if self._decay_rate:
+                # Do exponential decay
+                    self._epsilon *= self._decay_rate
+                # Do linear decay
+                else:
+                    self._epsilon -= self._decrement

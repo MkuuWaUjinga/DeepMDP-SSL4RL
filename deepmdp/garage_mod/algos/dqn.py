@@ -91,7 +91,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         qval = self.qf(observations)
         actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
-        q_selected = torch.sum(qval*actions, axis=1)
+        q_selected = torch.sum(qval * actions, axis=1)
 
         qf_loss = torch.nn.SmoothL1Loss()
         qval_loss = qf_loss(q_selected, target)
@@ -100,7 +100,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.qf_optimizer.step()
         return qval_loss.cpu().detach()
 
-    def one_hot(self, action, action_dim):
+    def one_hot(self, action, action_dim) -> torch.FloatTensor:
         y_onehot = torch.FloatTensor(self.buffer_batch_size, action_dim).to(device)
         y_onehot.zero_()
         y_onehot.scatter_(1, action.long().view(-1, 1), 1)
@@ -125,6 +125,13 @@ class DQN(OffPolicyRLAlgorithm):
             self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
             self.visdom.plot("episode mean q-values", "q-values", "Mean q-values per episode", i, self.episode_mean_q_vals[i])
             self.visdom.plot("episode std q-values", "q-std", "Std of q-values per episode", i, self.episode_std_q_vals[i])
+
+        # Decay epsilon of exploration strategy manually for each finished episode.
+        if self.es._episodical_decay:
+            for complete in paths["complete"]:
+                if complete:
+                    self.es._decay(episode_done=True)
+                    logger.log(f"Epsilon after episode {len(self.episode_rewards)} is {self.es._epsilon}")
 
         last_average_return = np.mean(self.episode_rewards)
         for _ in range(self.n_train_steps):
@@ -159,14 +166,18 @@ class DQN(OffPolicyRLAlgorithm):
                 * undiscounted_returns (list[float])
                 * episode_mean_q_vals (list[float])
                 * episode_std_q_vals (list[float])
+                * complete (list[float])
         """
         undiscounted_returns = [path['undiscounted_return'] for path in paths if path['dones'][-1]]
         episode_mean_q_vals = [np.mean(path['q_vals']) for path in paths if path['dones'][-1]]
         episode_std_q_vals = [np.std(path["q_vals"]) for path in paths if path['dones'][-1]]
 
+        complete = [path['dones'][-1] for path in paths]
+
         samples_data = dict(undiscounted_returns=undiscounted_returns,
                             episode_mean_q_vals=episode_mean_q_vals,
-                            episode_std_q_vals=episode_std_q_vals)
+                            episode_std_q_vals=episode_std_q_vals,
+                            complete=complete)
 
         return samples_data
 
