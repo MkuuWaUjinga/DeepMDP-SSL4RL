@@ -101,7 +101,7 @@ class DQN(OffPolicyRLAlgorithm):
         return qval_loss.cpu().detach()
 
     @staticmethod
-    def one_hot(actions, action_dim) -> torch.FloatTensor:
+    def one_hot(actions, action_dim) -> torch.Tensor:
         return torch.zeros((len(actions), action_dim)).scatter_(1, actions.long().unsqueeze(1), 1).to(device)
 
     def train_once(self, itr, paths):
