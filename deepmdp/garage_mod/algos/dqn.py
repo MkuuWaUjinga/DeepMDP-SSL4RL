@@ -100,11 +100,9 @@ class DQN(OffPolicyRLAlgorithm):
         self.qf_optimizer.step()
         return qval_loss.cpu().detach()
 
-    def one_hot(self, action, action_dim) -> torch.FloatTensor:
-        y_onehot = torch.FloatTensor(self.buffer_batch_size, action_dim).to(device)
-        y_onehot.zero_()
-        y_onehot.scatter_(1, action.long().view(-1, 1), 1)
-        return y_onehot
+    @staticmethod
+    def one_hot(actions, action_dim) -> torch.FloatTensor:
+        return torch.zeros((len(actions), action_dim)).scatter_(1, actions.long().unsqueeze(1), 1).to(device)
 
     def train_once(self, itr, paths):
         """Perform one step of policy optimization given one batch of samples.
