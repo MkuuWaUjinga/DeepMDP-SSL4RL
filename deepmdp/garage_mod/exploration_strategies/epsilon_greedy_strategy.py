@@ -42,6 +42,9 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
         self._action_space = env_spec.action_space
         self._epsilon = self._max_epsilon
         self._episodical_decay = episodical_decay
+        self._decay_rate = None
+        self._decrement = None
+        self._decay_period = None
         if exponential_decay_rate is None:
             self._decay_period = int(total_timesteps * decay_ratio)
             self._decrement = (self._max_epsilon -
