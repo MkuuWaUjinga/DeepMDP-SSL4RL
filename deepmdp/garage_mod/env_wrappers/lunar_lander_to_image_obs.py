@@ -21,7 +21,7 @@ class LunarLanderToImageObservations(gym.Wrapper):
     """
 
     def __init__(self, env):
-        assert env.spec._env_name == 'LunarLander'
+        assert env.spec.id == 'LunarLander-v2'
         super().__init__(env)
         self._observation_space = gym.spaces.Box(
             0,
