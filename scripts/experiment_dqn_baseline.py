@@ -7,5 +7,5 @@ from dowel import logger
 logger.add_output(dowel.StdOutput())
 deterministic.set_seed(21)
 ex.observers.append(FileStorageObserver("runs"))
-ex.add_config("configs/LunarLander/lunar_lander.json")
+ex.add_config("configs/LunarLander/image-obs/lunar_lander.json")
 ex.run()

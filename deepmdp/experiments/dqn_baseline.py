@@ -22,6 +22,7 @@ from deepmdp.garage_mod.exploration_strategies.epsilon_greedy_strategy import Ep
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
+from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLanderToImageObservations
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
@@ -73,9 +74,13 @@ def setup_atari_env(env_name):
     env = StackFrames(env, 4)
     return GarageEnv(env)
 
-def is_atari(env_name):
-    atari_env_names = ["SpaceInvaders-v0"]
-    return env_name in atari_env_names
+def setup_lunar_lander(env_name):
+    env = gym.make(env_name)
+    env = LunarLanderToImageObservations(env)
+    env = Grayscale(env)
+    env = Resize(env, 84, 84)
+    env = StackFrames(env, 4)
+    return GarageEnv(env)
 
 def run_task(snapshot_config, env_name, dqn_config):
     logger.log(f"Config of this experiment is {dqn_config}")
@@ -92,10 +97,15 @@ def run_task(snapshot_config, env_name, dqn_config):
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
-    if not is_atari(env_name):
-        env = GarageEnv(env_name="LunarLander-v2")
+    if "LunarLander-v2" in env_name:
+        # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
+        if env_name[-4:] == "-img":
+            env = setup_lunar_lander(env_name[:-4])
+        else:
+            env = GarageEnv(gym.make(env_name))
     else:
         env = setup_atari_env(env_name)
+
     # Set env seed
     env.seed(get_seed())
     # Set seed for action space (needed for epsilon-greedy reproducability)
