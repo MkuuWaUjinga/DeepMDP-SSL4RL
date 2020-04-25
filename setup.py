@@ -17,7 +17,8 @@ reqs=[
     "ipdb",
     "termcolor",
     "visdom",
-    "pygame"
+    "pygame",
+    "click"
 ]
 
 setup(
