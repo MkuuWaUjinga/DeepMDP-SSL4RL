@@ -104,6 +104,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     obs_normalized)
 
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions)
+            #self.vec_env.envs[0].render()
             self._last_obses = next_obses
             env_infos = tensor_utils.split_tensor_dict_list(env_infos)
             n_samples += len(next_obses)
