@@ -3,6 +3,8 @@ import torch
 from garage.torch.modules.mlp_module import MLPModule
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class RewardAuxiliaryObjective(AuxiliaryObjective):
 
     def __init__(self,
@@ -26,11 +28,14 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
             output_nonlinearity=self._output_nonlinearity,
             output_w_init=self._output_w_init,
             output_b_init=self._output_b_init
-        ) # fully-connected 1 x num_actions outputs
+        ).to(device) # fully-connected 1 x num_actions outputs
 
 
-    def compute_loss(self, embedding, rewards):
+    def compute_loss(self, embedding, rewards, **kwargs):
+        actions = kwargs.get("actions")
+        assert list(actions.size()) == [32, 4]
         preds = self.reward_network(embedding)
+        selected_predicted_rewards = torch.sum(preds * actions, axis = 1)
         loss_func = torch.nn.SmoothL1Loss()
-        return loss_func(preds, rewards)
+        return loss_func(selected_predicted_rewards, rewards)
 

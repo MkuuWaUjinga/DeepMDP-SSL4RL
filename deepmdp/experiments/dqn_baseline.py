@@ -95,7 +95,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     target_network_update_freq = dqn_config.get("target_network_update_freq")
     min_buffer_size = dqn_config.get("min_buffer_size")
     net_config = dqn_config.get("net")
-    deepmdp_config = dqn_config.get("deepmdp")
+    use_deepmdp = dqn_config.get("use_deepmdp")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
@@ -119,9 +119,10 @@ def run_task(snapshot_config, env_name, dqn_config):
     strategy = EpsilonGreedyStrategy(env.spec, steps, **epsilon_greedy_config)
     qf = DiscreteCNNQFunction(env_spec=env.spec,
                               **net_config)
-    if deepmdp_config:
-        aux_objectives = []
-        reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size, **deepmdp_config)
+
+    aux_objectives = []
+    if use_deepmdp:
+        reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size)
         aux_objectives.append(reward_objective)
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)

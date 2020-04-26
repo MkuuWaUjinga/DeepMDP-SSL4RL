@@ -82,7 +82,6 @@ class DiscreteCNNQFunction(nn.Module):
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
         self._input_shape = tuple(input_shape)
-        self.embedding_size = self._get_conv_output(self._input_shape)
         self.obs_dim = self._env_spec.observation_space.shape
 
         super(DiscreteCNNQFunction, self).__init__()
@@ -91,6 +90,7 @@ class DiscreteCNNQFunction(nn.Module):
 
         # Init Cnn
         self.cnn = nn.Sequential(*list(self.cnn_module_generator()))
+        self.embedding_size = self._get_conv_output(self._input_shape)
 
         # Init Mlp
         self.mlp = MLPModule(input_dim=self.embedding_size,
@@ -111,16 +111,18 @@ class DiscreteCNNQFunction(nn.Module):
         return n_size
 
     # pylint: disable=arguments-differ
-    def forward(self, x):
+    def forward(self, x, return_embedding=False):
         if not torch.is_tensor(x):
             x = torch.FloatTensor(x)
         x = x.to(device)
         if len(x.size()) == 4:
             x = x.permute(0, 3, 2, 1)
         x = self.cnn(x)
-        x = x.view(x.size(0), -1)
-        x = self.mlp(x)
-        return x
+        embedding = x.view(x.size(0), -1)
+        preds = self.mlp(embedding)
+        if return_embedding:
+            return preds, embedding
+        return preds
 
     def cnn_module_generator(self):
         for input_dim, output_dim, filter_dim, stride in zip(

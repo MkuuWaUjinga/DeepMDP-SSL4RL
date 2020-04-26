@@ -8,6 +8,7 @@ from garage.misc.tensor_utils import normalize_pixel_batch
 from garage.torch.utils import np_to_torch
 from deepmdp.experiments.utils import VisdomLinePlotter
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
+from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -61,6 +62,8 @@ class DQN(OffPolicyRLAlgorithm):
         self.target_qf.to(device)
         self.qf.to(device)
         self.visdom = VisdomLinePlotter(9098, xlabel="episode number")
+        self.auxiliary_objectives = auxiliary_objectives
+
         logger.log(f"Number of parameter of q-network are: {sum(p.numel() for p in qf.parameters() if p.requires_grad)}")
 
 
@@ -74,7 +77,7 @@ class DQN(OffPolicyRLAlgorithm):
         # Obs. are stored in uint8 format in replay buffer to optimize memory.
         # Convert pixel values to [0,1] for training if env's obs are images.
         transitions["observation"] = np.array(normalize_pixel_batch(self.env_spec, transitions["observation"]))
-        transitions["next_observation"] = np.asarray(normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
+        transitions["next_observation"] = np.array(normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
         # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
         # creation around 10 times faster.
         transitions = np_to_torch(transitions)
@@ -92,14 +95,22 @@ class DQN(OffPolicyRLAlgorithm):
         # if done, it's just reward else reward + discount * target_qvals
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
-        qval = self.qf(observations)
+        qval, embedding = self.qf(observations, return_embedding=True)
         actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
         q_selected = torch.sum(qval * actions, axis=1)
 
+        losses = []
+        for auxiliary_objective in self.auxiliary_objectives:
+            if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
+                aux_loss = auxiliary_objective.compute_loss(embedding, rewards, actions=actions)
+                losses.append(aux_loss)
+
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
+        losses.append(qval_loss)
         self.qf_optimizer.zero_grad()
-        qval_loss.backward()
+        for loss in losses:
+            loss.backward()
         self.qf_optimizer.step()
         return qval_loss.cpu().detach()
 
