@@ -82,18 +82,18 @@ class DiscreteCNNQFunction(nn.Module):
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
         self._input_shape = tuple(input_shape)
+        self.embedding_size = self._get_conv_output(self._input_shape)
+        self.obs_dim = self._env_spec.observation_space.shape
 
         super(DiscreteCNNQFunction, self).__init__()
 
-        self.obs_dim = self._env_spec.observation_space.shape
         action_dim = self._env_spec.action_space.flat_dim
 
         # Init Cnn
         self.cnn = nn.Sequential(*list(self.cnn_module_generator()))
 
         # Init Mlp
-        flattened_input_size = self._get_conv_output(self._input_shape)
-        self.mlp = MLPModule(input_dim=flattened_input_size,
+        self.mlp = MLPModule(input_dim=self.embedding_size,
                              output_dim=action_dim,
                              hidden_sizes=list(self._dense_sizes),
                              hidden_nonlinearity=self._hidden_nonlinearity,
