@@ -1,11 +1,13 @@
 import torch
 import numpy as np
 
+from typing import List
 from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.misc.tensor_utils import normalize_pixel_batch
 from garage.torch.utils import np_to_torch
 from deepmdp.experiments.utils import VisdomLinePlotter
+from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -30,6 +32,7 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  input_include_goal=False,
                  smooth_return=True,
+                 auxiliary_objectives: List[AuxiliaryObjective] = None
                  ):
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
@@ -93,8 +96,8 @@ class DQN(OffPolicyRLAlgorithm):
         actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
         q_selected = torch.sum(qval * actions, axis=1)
 
-        qf_loss = torch.nn.SmoothL1Loss()
-        qval_loss = qf_loss(q_selected, target)
+        loss_func = torch.nn.SmoothL1Loss()
+        qval_loss = loss_func(q_selected, target)
         self.qf_optimizer.zero_grad()
         qval_loss.backward()
         self.qf_optimizer.step()

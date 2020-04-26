@@ -22,6 +22,7 @@ from deepmdp.garage_mod.exploration_strategies.epsilon_greedy_strategy import Ep
 from deepmdp.garage_mod.policies.discrete_qf_derived_policy import DiscreteQfDerivedPolicy
 from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
+from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLanderToImageObservations
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 
@@ -94,6 +95,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     target_network_update_freq = dqn_config.get("target_network_update_freq")
     min_buffer_size = dqn_config.get("min_buffer_size")
     net_config = dqn_config.get("net")
+    deepmdp_config = dqn_config.get("deepmdp")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
@@ -117,6 +119,11 @@ def run_task(snapshot_config, env_name, dqn_config):
     strategy = EpsilonGreedyStrategy(env.spec, steps, **epsilon_greedy_config)
     qf = DiscreteCNNQFunction(env_spec=env.spec,
                               **net_config)
+    if deepmdp_config:
+        aux_objectives = []
+        reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size, **deepmdp_config)
+        aux_objectives.append(reward_objective)
+
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,
                qf=qf,
@@ -130,7 +137,9 @@ def run_task(snapshot_config, env_name, dqn_config):
                n_epoch_cycles=steps_per_epoch,
                target_network_update_freq=target_network_update_freq,
                qf_lr=learning_rate,
-               max_path_length=1000)
+               max_path_length=1000,
+               auxiliary_objectives=aux_objectives)
+
     # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
     algo.sampler_cls = OffPolicyVectorizedSampler
 
