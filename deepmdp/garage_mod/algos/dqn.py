@@ -96,7 +96,7 @@ class DQN(OffPolicyRLAlgorithm):
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
         qval, embedding = self.qf(observations, return_embedding=True)
-        actions = self.one_hot(actions, action_dim) # Todo is there a better way to do this?
+        actions = self.one_hot(actions, action_dim)
         q_selected = torch.sum(qval * actions, axis=1)
 
         losses = []
