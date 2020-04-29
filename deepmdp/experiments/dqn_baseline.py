@@ -25,6 +25,7 @@ from deepmdp.garage_mod.algos.dqn import DQN
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLanderToImageObservations
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
+from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
 
@@ -123,7 +124,9 @@ def run_task(snapshot_config, env_name, dqn_config):
     aux_objectives = []
     if use_deepmdp:
         reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size)
+        transition_objective = TransitionAuxiliaryObjective(env.spec, net_config["num_filters"][-1])
         aux_objectives.append(reward_objective)
+        aux_objectives.append(transition_objective)
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,

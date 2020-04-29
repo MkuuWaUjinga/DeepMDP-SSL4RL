@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch import nn
 from garage.torch.modules.mlp_module import MLPModule
 
@@ -59,7 +60,6 @@ class DiscreteCNNQFunction(nn.Module):
                  strides=None,
                  dense_sizes=None,
                  input_shape=None,
-                 padding_mode='same',
                  cnn_hidden_nonlinearity=nn.ReLU,
                  hidden_nonlinearity=nn.ReLU,
                  hidden_w_init=torch.nn.init.xavier_normal_,
@@ -73,7 +73,6 @@ class DiscreteCNNQFunction(nn.Module):
         self._num_filters = tuple(num_filters)
         self._strides = tuple(strides)
         self._dense_sizes = tuple(dense_sizes)
-        self._padding_mode = padding_mode
         self._cnn_hidden_nonlinearity = cnn_hidden_nonlinearity
         self._hidden_nonlinearity = hidden_nonlinearity
         self._hidden_w_init = hidden_w_init
@@ -117,9 +116,9 @@ class DiscreteCNNQFunction(nn.Module):
         x = x.to(device)
         if len(x.size()) == 4:
             x = x.permute(0, 3, 2, 1)
-        x = self.cnn(x)
-        embedding = x.view(x.size(0), -1)
-        preds = self.mlp(embedding)
+        embedding = self.cnn(x)
+        x = embedding.view(embedding.size(0), -1)
+        preds = self.mlp(x)
         if return_embedding:
             return preds, embedding
         return preds
@@ -132,7 +131,7 @@ class DiscreteCNNQFunction(nn.Module):
                 out_channels=output_dim,
                 kernel_size=filter_dim,
                 stride=stride,
-                padding_mode=self._padding_mode
+                padding=filter_dim//2 #  Maintain spatial resolution if stride 1
             )
             self._hidden_w_init(conv_layer.weight)
             self._hidden_b_init(conv_layer.bias)
@@ -146,7 +145,6 @@ class DiscreteCNNQFunction(nn.Module):
                               num_filters=self._num_filters,
                               strides=self._strides,
                               dense_sizes=self._dense_sizes,
-                              padding_mode=self._padding_mode,
                               hidden_nonlinearity=self._hidden_nonlinearity,
                               hidden_w_init=self._hidden_w_init,
                               hidden_b_init=self._hidden_b_init,

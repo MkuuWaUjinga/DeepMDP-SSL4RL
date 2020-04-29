@@ -31,8 +31,7 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
         ).to(device) # fully-connected 1 x num_actions outputs
 
 
-    def compute_loss(self, embedding, rewards, **kwargs):
-        actions = kwargs.get("actions")
+    def compute_loss(self, embedding, rewards, actions):
         assert list(actions.size()) == [32, 4]
         preds = self.reward_network(embedding)
         selected_predicted_rewards = torch.sum(preds * actions, axis = 1)

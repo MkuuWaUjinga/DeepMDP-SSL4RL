@@ -9,6 +9,7 @@ from garage.torch.utils import np_to_torch
 from deepmdp.experiments.utils import VisdomLinePlotter
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
+from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -96,21 +97,23 @@ class DQN(OffPolicyRLAlgorithm):
         target = rewards + (1.0 - dones) * self.discount * target_qvals
 
         qval, embedding = self.qf(observations, return_embedding=True)
-        actions = self.one_hot(actions, action_dim)
-        q_selected = torch.sum(qval * actions, axis=1)
+        actions_one_hot = self.one_hot(actions, action_dim)
+        q_selected = torch.sum(qval * actions_one_hot, axis=1)
 
-        losses = []
+        loss = 0
         for auxiliary_objective in self.auxiliary_objectives:
             if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
-                aux_loss = auxiliary_objective.compute_loss(embedding, rewards, actions=actions)
-                losses.append(aux_loss)
+                flattened_embedding = embedding.view(embedding.size(0), -1)
+                loss += auxiliary_objective.compute_loss(flattened_embedding, rewards, actions_one_hot)
+            elif isinstance(auxiliary_objective, TransitionAuxiliaryObjective):
+                _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
+                loss += auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
-        losses.append(qval_loss)
+        loss += qval_loss
         self.qf_optimizer.zero_grad()
-        for loss in losses:
-            loss.backward()
+        loss.backward()
         self.qf_optimizer.step()
         return qval_loss.cpu().detach()
 
