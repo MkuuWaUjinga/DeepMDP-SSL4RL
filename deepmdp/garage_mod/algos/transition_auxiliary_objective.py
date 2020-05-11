@@ -18,11 +18,11 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
 
         self._env_spec = env_spec
         self.in_channels = in_channels
+        self.action_dim = self._env_spec.action_space.flat_dim
 
-        action_dim = self._env_spec.action_space.flat_dim
         conv = torch.nn.Conv2d(
                 in_channels=self.in_channels,
-                out_channels=self.in_channels * action_dim,
+                out_channels=self.in_channels * self.action_dim,
                 kernel_size=2,
                 stride=1,
             ).to(device)
@@ -40,10 +40,14 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
         :return: The mean squared error between the predicted and the ground truth embedding of the next observation.
         """
         preds = self.latent_transition_network(embedding)
-        mask = np.zeros((len(actions), preds.size()[1], preds.size()[2], preds.size()[3]))
-        for i, act in enumerate(actions):
-            mask[i, self.in_channels * int(act.item()): self.in_channels * (int(act.item()) + 1), :, :] = 1
-        mask = torch.from_numpy(mask).bool()
-        predicted_next_observation_embedding = torch.masked_select(preds, mask)
+        batch_size = actions.size(0)
+        # Reshape tensor: B x act * channels ... --> B x channels x ... x act
+        preds = preds.unsqueeze(len(preds.size())).reshape(batch_size, self.in_channels, *preds.size()[2:4], self.action_dim)
         loss_func = torch.nn.MSELoss()
-        return loss_func(predicted_next_observation_embedding, embedding_next_observation.flatten())
+        loss = 0
+        for i, act in enumerate(actions):
+            predicted__next_observiation_embedding = preds[i, ..., int(act.item())].squeeze()
+            ground_truth_embedding = embedding_next_observation[i, ...]
+            assert(ground_truth_embedding.size() == predicted__next_observiation_embedding.size())
+            loss += loss_func(predicted__next_observiation_embedding, ground_truth_embedding)
+        return loss
