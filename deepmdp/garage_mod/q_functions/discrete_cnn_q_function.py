@@ -55,44 +55,57 @@ class DiscreteCNNQFunction(nn.Module):
         """
     def __init__(self,
                  env_spec,
-                 filter_dims=None,
-                 num_filters=None,
-                 strides=None,
-                 dense_sizes=None,
-                 input_shape=None,
-                 cnn_hidden_nonlinearity=nn.ReLU,
+                 encoder=None,
+                 head=None,
                  hidden_nonlinearity=nn.ReLU,
                  hidden_w_init=torch.nn.init.xavier_normal_,
                  hidden_b_init=nn.init.zeros_,
                  output_nonlinearity=None,
                  output_w_init=torch.nn.init.xavier_normal_,
                  output_b_init=torch.nn.init.zeros_):
+        self._encoder_config = encoder
+        self._head_config = head
         self._env_spec = env_spec
         self._action_dim = env_spec.action_space.n
-        self._filter_dims = tuple(filter_dims)
-        self._num_filters = tuple(num_filters)
-        self._strides = tuple(strides)
-        self._dense_sizes = tuple(dense_sizes)
-        self._cnn_hidden_nonlinearity = cnn_hidden_nonlinearity
         self._hidden_nonlinearity = hidden_nonlinearity
         self._hidden_w_init = hidden_w_init
         self._hidden_b_init = hidden_b_init
         self._output_nonlinearity = output_nonlinearity
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
-        self._input_shape = tuple(input_shape)
         self.obs_dim = self._env_spec.observation_space.shape
 
         super(DiscreteCNNQFunction, self).__init__()
 
         action_dim = self._env_spec.action_space.flat_dim
 
-        # Init Cnn
-        self.cnn = nn.Sequential(*list(self.cnn_module_generator()))
-        self.embedding_size = self._get_conv_output(self._input_shape)
+        # Init Encoder
+        self._input_shape = self._encoder_config["input_shape"]
+        if "filter_dims" in encoder:
+            use_conv_net = True
+            self._filter_dims = tuple(self._encoder_config["filter_dims"])
+            self._num_filters = tuple(self._encoder_config["num_filters"])
+            self._strides = tuple(self._encoder_config["strides"])
+            self.encoder = nn.Sequential(*list(self.cnn_module_generator()))
+            self.embedding_size = self._get_conv_output(self._input_shape)
+        elif "dense_sizes" in encoder:
+            use_conv_net = False
+            self.embedding_size = self._encoder_config["dense_sizes"][-1]
+            self.encoder = MLPModule(
+                input_dim=self._input_shape,
+                output_dim=self.embedding_size,
+                hidden_sizes=list(self._encoder_config["dense_sizes"][:-1]),
+                hidden_nonlinearity=self._hidden_nonlinearity,
+                hidden_w_init=self._hidden_w_init,
+                hidden_b_init=self._hidden_b_init,
+                output_nonlinearity=self._output_nonlinearity,
+                output_w_init=self._output_w_init,
+                output_b_init=self._output_b_init
+            )
 
         # Init Mlp
-        self.mlp = MLPModule(input_dim=self.embedding_size,
+        self._dense_sizes = tuple(self._head_config["dense_sizes"])
+        self.head = MLPModule(input_dim=self.embedding_size,
                              output_dim=action_dim,
                              hidden_sizes=list(self._dense_sizes),
                              hidden_nonlinearity=self._hidden_nonlinearity,
@@ -116,9 +129,9 @@ class DiscreteCNNQFunction(nn.Module):
         x = x.to(device)
         if len(x.size()) == 4:
             x = x.permute(0, 3, 2, 1)
-        embedding = self.cnn(x)
+        embedding = self.encoder(x)
         x = embedding.view(embedding.size(0), -1)
-        preds = self.mlp(x)
+        preds = self.head(x)
         if return_embedding:
             return preds, embedding
         return preds
@@ -140,11 +153,8 @@ class DiscreteCNNQFunction(nn.Module):
 
     def clone(self):
         return self.__class__(env_spec=self._env_spec,
-                              input_shape=self._input_shape,
-                              filter_dims=self._filter_dims,
-                              num_filters=self._num_filters,
-                              strides=self._strides,
-                              dense_sizes=self._dense_sizes,
+                              encoder=self._encoder_config,
+                              head=self._head_config,
                               hidden_nonlinearity=self._hidden_nonlinearity,
                               hidden_w_init=self._hidden_w_init,
                               hidden_b_init=self._hidden_b_init,
