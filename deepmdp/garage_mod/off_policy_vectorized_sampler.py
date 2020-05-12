@@ -129,13 +129,17 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     ],
                 )
             else:
+                payload = {
+                    "observation": obses,
+                    "action": actions,
+                    "reward": rewards * self.algo.reward_scale,
+                    "terminal": dones,
+                    "next_observation": next_obses
+                }
+                if env_infos and env_infos[0].get("obfuscated_state_info"):
+                    payload["obfuscated_state"] = [env_info.get("obfuscated_state_info") for env_info in env_infos]
                 self.algo.replay_buffer.add_transitions(
-                    obfuscated_state = [env_info.get("obfuscated_state_info") for env_info in env_infos],
-                    observation=obses,
-                    action=actions,
-                    reward=rewards * self.algo.reward_scale,
-                    terminal=dones,
-                    next_observation=next_obses,
+                    **payload
                 )
 
             for idx, reward, env_info, q_val, done in zip(itertools.count(), rewards,

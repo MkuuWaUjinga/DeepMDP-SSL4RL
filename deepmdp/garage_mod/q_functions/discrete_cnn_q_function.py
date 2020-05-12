@@ -118,7 +118,7 @@ class DiscreteCNNQFunction(nn.Module):
     # Infer shape of tensor passed to mlp
     def _get_conv_output(self, shape):
         input = torch.autograd.Variable(torch.rand(1, *shape))
-        output_feat = self.cnn(input)
+        output_feat = self.encoder(input)
         n_size = output_feat.data.view(1, -1).size(1)
         return n_size
 

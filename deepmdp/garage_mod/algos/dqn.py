@@ -87,8 +87,10 @@ class DQN(OffPolicyRLAlgorithm):
         actions = transitions['action'].to(device)
         next_observations = transitions['next_observation']
         dones = transitions['terminal'].to(device)
-        obfuscated_env_state = transitions['obfuscated_state']
-        # TODO log correlation of obfuscated state and embedding of next_observation
+
+        if "obfuscated_state" in transitions:
+            state = transitions["obfuscated_state"]
+            # TODO log correlation of obfuscated state and embedding of next_observation
 
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
