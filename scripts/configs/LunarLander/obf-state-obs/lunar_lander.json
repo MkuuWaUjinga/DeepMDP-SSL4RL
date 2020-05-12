@@ -1,0 +1,35 @@
+{
+    "env_name": "LunarLander-v2-obf",
+    "dqn_config": {
+        "learning_rate": 0.0001,
+        "replay_buffer_size": 65536,
+        "buffer_batch_size": 32,
+        "n_train_steps": 1,
+        "n_epochs": 1,
+        "sampler_batch_size": 32,
+        "steps_per_epoch": 320000,
+        "min_buffer_size": 64,
+        "target_network_update_freq": 1,
+        "net": {
+            "encoder": {
+                "dense_sizes": [128, 8],
+                "input_shape": 20
+            },
+            "head": {
+                "dense_sizes": [256, 128]
+            }
+        },
+        "epsilon_greedy": {
+            "max_epsilon": 1.0,
+            "min_epsilon": 0.05,
+            "decay_ratio": 0.5,
+            "exponential_decay_rate": 0.995,
+            "episodical_decay": true
+        },
+        "deepmdp": {
+            "use": true,
+            "use_linear_transition_net": true,
+            "primary_embedding_dim_size": 8
+        }
+    }
+}
