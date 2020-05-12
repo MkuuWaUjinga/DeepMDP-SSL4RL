@@ -24,6 +24,7 @@ from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLanderToImageObservations
+from deepmdp.garage_mod.env_wrappers.obfuscate_velocity_information import ObfuscateVelocityInformation
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
 
@@ -45,13 +46,6 @@ def config():
         "buffer_batch_size": 32,
         "target_network_update_freq": 5,
         "min_buffer_size": 100,
-        "net": {
-            "filter_dims": (8, 4, 3),
-            "num_filters": (32, 64, 64),
-            "strides": (4, 2, 1),
-            "dense_sizes": (512, ),
-            "input_shape": (4, 84, 84)
-        },
         "epsilon_greedy": {
             "max_epsilon": 1.0,
             "min_epsilon": 0.1,
@@ -76,13 +70,21 @@ def setup_atari_env(env_name):
     env = StackFrames(env, 4)
     return GarageEnv(env)
 
-def setup_lunar_lander(env_name):
+def setup_lunar_lander_with_image_obs(env_name):
     env = gym.make(env_name)
     env = LunarLanderToImageObservations(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
     env = StackFrames(env, 4)
     return GarageEnv(env)
+
+def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames=4):
+    from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
+    env = gym.make(env_name)
+    env = ObfuscateVelocityInformation(env)
+    env = StackFrames(env, number_of_stacked_frames)
+    return GarageEnv(env)
+
 
 def run_task(snapshot_config, env_name, dqn_config):
     logger.log(f"Config of this experiment is {dqn_config}")
@@ -96,14 +98,16 @@ def run_task(snapshot_config, env_name, dqn_config):
     target_network_update_freq = dqn_config.get("target_network_update_freq")
     min_buffer_size = dqn_config.get("min_buffer_size")
     net_config = dqn_config.get("net")
-    use_deepmdp = dqn_config.get("use_deepmdp")
+    deepmdp_config = dqn_config.get("deepmdp")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
     if "LunarLander-v2" in env_name:
         # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
         if env_name[-4:] == "-img":
-            env = setup_lunar_lander(env_name[:-4])
+            env = setup_lunar_lander_with_image_obs(env_name[:-4])
+        elif env_name[-4:] == "-obf":
+            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4])
         else:
             env = GarageEnv(gym.make(env_name))
     else:
@@ -122,9 +126,12 @@ def run_task(snapshot_config, env_name, dqn_config):
                               **net_config)
 
     aux_objectives = []
-    if use_deepmdp:
+    if deepmdp_config["use"]:
         reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size)
-        transition_objective = TransitionAuxiliaryObjective(env.spec, net_config["num_filters"][-1])
+        use_linear = deepmdp_config["use_linear_transition_net"]
+        transition_objective = TransitionAuxiliaryObjective(env.spec,
+                                                            deepmdp_config["primary_embedding_dim_size"],
+                                                            use_linear_transition_net=use_linear)
         aux_objectives.append(reward_objective)
         aux_objectives.append(transition_objective)
 
