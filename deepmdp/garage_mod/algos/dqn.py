@@ -87,6 +87,8 @@ class DQN(OffPolicyRLAlgorithm):
         actions = transitions['action'].to(device)
         next_observations = transitions['next_observation']
         dones = transitions['terminal'].to(device)
+        obfuscated_env_state = transitions['obfuscated_state']
+        # TODO log correlation of obfuscated state and embedding of next_observation
 
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
@@ -148,11 +150,11 @@ class DQN(OffPolicyRLAlgorithm):
                     self.es._decay(episode_done=True)
                     logger.log(f"Epsilon after episode {len(self.episode_rewards)} is {self.es._epsilon}")
 
-        last_average_return = np.mean(self.episode_rewards)
+        last_average_return = np.mean(self.episode_rewards) if self.episode_rewards else 0
         for _ in range(self.n_train_steps):
             if self._buffer_prefilled:
                 qf_loss = self.optimize_policy(itr, None)
-                self.episode_qf_losses.append(qf_loss)
+                self.episode_qf_losses.append(qf_loss.item())
 
         if self._buffer_prefilled:
             if itr % self.target_network_update_freq == 0:
