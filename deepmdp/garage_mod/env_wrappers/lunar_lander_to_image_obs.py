@@ -4,7 +4,7 @@ import gym.spaces
 from gym.envs.box2d.lunar_lander import VIEWPORT_H, VIEWPORT_W
 
 class LunarLanderToImageObservations(gym.Wrapper):
-    """Wrap for Lunar Lander environments. Turns LunarLander's semantically rich observation vector to RGB-image
+    """Wrapper for Lunar Lander environments. Turns LunarLander's semantically rich observation vector to RGB-image
     observations.
     This wrapper only works if you use it as the first wrapper for a gym env
 
