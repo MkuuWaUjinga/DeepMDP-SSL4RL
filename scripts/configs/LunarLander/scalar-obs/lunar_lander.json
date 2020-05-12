@@ -11,11 +11,16 @@
         "min_buffer_size": 64,
         "target_network_update_freq": 1,
         "net": {
-            "filter_dims": [],
-            "num_filters": [],
-            "strides": [],
-            "dense_sizes": [256, 128],
-            "input_shape": [8]
+            "encoder": {
+                "filter_dims": [],
+                "num_filters": [],
+                "strides": [],
+                "input_shape": [8]
+
+            },
+            "head": {
+                "dense_sizes": [256, 128]
+            }
         },
         "epsilon_greedy": {
             "max_epsilon": 1.0,
