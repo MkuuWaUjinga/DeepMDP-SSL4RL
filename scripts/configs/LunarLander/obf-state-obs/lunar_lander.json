@@ -9,11 +9,11 @@
         "sampler_batch_size": 1,
         "steps_per_epoch": 320000,
         "min_buffer_size": 64,
-        "target_network_update_freq": 1,
+        "target_network_update_freq": 10,
         "net": {
             "encoder": {
                 "dense_sizes": [128, 8],
-                "input_shape": 20
+                "input_shape": [20]
             },
             "head": {
                 "dense_sizes": [256, 128]
@@ -27,7 +27,7 @@
             "episodical_decay": true
         },
         "deepmdp": {
-            "use": true,
+            "use": false,
             "use_linear_transition_net": true,
             "primary_embedding_dim_size": 8
         }
