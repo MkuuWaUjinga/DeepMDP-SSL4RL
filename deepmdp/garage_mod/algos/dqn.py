@@ -171,6 +171,7 @@ class DQN(OffPolicyRLAlgorithm):
                 tabular.record("Episode100QValuesMean", mean100ep_q_vals)
                 tabular.record('Episode100RewardMean', mean100ep_rewards)
                 tabular.record('Episode100LossMean', mean100ep_qf_loss)
+                tabular.record('CurrentEpsilon', self.es._epsilon)
         return last_average_return
 
     def process_samples(self, itr, paths):
