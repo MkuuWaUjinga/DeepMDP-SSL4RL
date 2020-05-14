@@ -82,17 +82,15 @@ class DiscreteCNNQFunction(nn.Module):
         # Init Encoder
         self._input_shape = self._encoder_config["input_shape"]
         if "filter_dims" in encoder:
-            use_conv_net = True
             self._filter_dims = tuple(self._encoder_config["filter_dims"])
             self._num_filters = tuple(self._encoder_config["num_filters"])
             self._strides = tuple(self._encoder_config["strides"])
             self.encoder = nn.Sequential(*list(self.cnn_module_generator()))
             self.embedding_size = self._get_conv_output(self._input_shape)
         elif "dense_sizes" in encoder:
-            use_conv_net = False
             self.embedding_size = self._encoder_config["dense_sizes"][-1]
             self.encoder = MLPModule(
-                input_dim=self._input_shape,
+                input_dim=self._input_shape[0],
                 output_dim=self.embedding_size,
                 hidden_sizes=list(self._encoder_config["dense_sizes"][:-1]),
                 hidden_nonlinearity=self._hidden_nonlinearity,
@@ -104,10 +102,9 @@ class DiscreteCNNQFunction(nn.Module):
             )
 
         # Init Mlp
-        self._dense_sizes = tuple(self._head_config["dense_sizes"])
         self.head = MLPModule(input_dim=self.embedding_size,
                              output_dim=action_dim,
-                             hidden_sizes=list(self._dense_sizes),
+                             hidden_sizes=list(tuple(self._head_config["dense_sizes"])),
                              hidden_nonlinearity=self._hidden_nonlinearity,
                              hidden_w_init=self._hidden_w_init,
                              hidden_b_init=self._hidden_b_init,
@@ -117,10 +114,11 @@ class DiscreteCNNQFunction(nn.Module):
 
     # Infer shape of tensor passed to mlp
     def _get_conv_output(self, shape):
-        input = torch.autograd.Variable(torch.rand(1, *shape))
-        output_feat = self.encoder(input)
-        n_size = output_feat.data.view(1, -1).size(1)
-        return n_size
+        with torch.no_grad():
+            input = torch.autograd.Variable(torch.rand(1, *shape))
+            output_feat = self.encoder(input)
+            n_size = output_feat.data.view(1, -1).size(1)
+            return n_size
 
     # pylint: disable=arguments-differ
     def forward(self, x, return_embedding=False):
