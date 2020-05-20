@@ -53,6 +53,7 @@ class DiscreteCNNQFunction(nn.Module):
                 a tf.Tensor.
             layer_normalization (bool): Bool for using layer normalization or not.
         """
+
     def __init__(self,
                  env_spec,
                  encoder=None,
@@ -62,7 +63,8 @@ class DiscreteCNNQFunction(nn.Module):
                  hidden_b_init=nn.init.zeros_,
                  output_nonlinearity=None,
                  output_w_init=torch.nn.init.xavier_normal_,
-                 output_b_init=torch.nn.init.zeros_):
+                 output_b_init=torch.nn.init.zeros_,
+                 layer_norm=True):
         self._encoder_config = encoder
         self._head_config = head
         self._env_spec = env_spec
@@ -98,19 +100,21 @@ class DiscreteCNNQFunction(nn.Module):
                 hidden_b_init=self._hidden_b_init,
                 output_nonlinearity=self._output_nonlinearity,
                 output_w_init=self._output_w_init,
-                output_b_init=self._output_b_init
+                output_b_init=self._output_b_init,
+                layer_normalization=layer_norm
             )
 
         # Init Mlp
         self.head = MLPModule(input_dim=self.embedding_size,
-                             output_dim=action_dim,
-                             hidden_sizes=list(tuple(self._head_config["dense_sizes"])),
-                             hidden_nonlinearity=self._hidden_nonlinearity,
-                             hidden_w_init=self._hidden_w_init,
-                             hidden_b_init=self._hidden_b_init,
-                             output_nonlinearity=self._output_nonlinearity,
-                             output_w_init=self._output_w_init,
-                             output_b_init=self._output_b_init)
+                              output_dim=action_dim,
+                              hidden_sizes=list(tuple(self._head_config["dense_sizes"])),
+                              hidden_nonlinearity=self._hidden_nonlinearity,
+                              hidden_w_init=self._hidden_w_init,
+                              hidden_b_init=self._hidden_b_init,
+                              output_nonlinearity=self._output_nonlinearity,
+                              output_w_init=self._output_w_init,
+                              output_b_init=self._output_b_init,
+                              layer_normalization=layer_norm)
 
     # Infer shape of tensor passed to mlp
     def _get_conv_output(self, shape):
@@ -142,7 +146,7 @@ class DiscreteCNNQFunction(nn.Module):
                 out_channels=output_dim,
                 kernel_size=filter_dim,
                 stride=stride,
-                padding=filter_dim//2 #  Maintain spatial resolution if stride 1
+                padding=filter_dim // 2  # Maintain spatial resolution if stride 1
             )
             self._hidden_w_init(conv_layer.weight)
             self._hidden_b_init(conv_layer.bias)
