@@ -8,6 +8,7 @@ from garage.misc.tensor_utils import normalize_pixel_batch
 from garage.torch.utils import np_to_torch
 from deepmdp.experiments.utils import VisdomLinePlotter
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
+from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
 
@@ -18,7 +19,7 @@ class DQN(OffPolicyRLAlgorithm):
     def __init__(self,
                  env_spec,
                  policy,
-                 qf,
+                 qf: DiscreteCNNQFunction,
                  replay_buffer,
                  exploration_strategy=None,
                  n_epoch_cycles=20,
@@ -34,7 +35,8 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  input_include_goal=False,
                  smooth_return=True,
-                 auxiliary_objectives: List[AuxiliaryObjective] = None
+                 auxiliary_objectives: List[AuxiliaryObjective] = None,
+                 penalty_lambda=0.01
                  ):
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
@@ -58,6 +60,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_mean_q_vals = []
         self.episode_qf_losses = []
         self.episode_std_q_vals = []
+        self.penalty_lamda = penalty_lambda
         # Clone target q-network
         self.target_qf = self.qf.clone()
         self.target_qf.to(device)
@@ -112,6 +115,18 @@ class DQN(OffPolicyRLAlgorithm):
             elif isinstance(auxiliary_objective, TransitionAuxiliaryObjective):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
                 loss += auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
+
+
+        # compute gradient penalty if we have auxiliary objective i.e. we train a DeepMDP
+        if self.auxiliary_objectives:
+            gradient_penalty = 0
+            gradient_penalty += self.compute_gradient_penalty(observations, self.qf.encoder)
+            for head in [self.qf.head] + self.auxiliary_objectives:
+                gradient_penalty += self.compute_gradient_penalty(head, embedding)
+                loss += self.penalty_lambda * gradient_penalty
+
+
+        # TODO log loss curves of auxiliary objectives.
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
@@ -226,3 +241,37 @@ class DQN(OffPolicyRLAlgorithm):
         """Restore state from the unpickled state values."""
         self.__dict__ = state
         self.visdom = VisdomLinePlotter(9098, xlabel="episode number")
+
+    def compute_gradient_penalty(self, net, samples, LP=False):
+        """Calculates the gradient penalty loss for WGAN GP, adapt for WGAN-LP
+        https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
+        # Random weight term for interpolation between real and fake samples
+        batch_size = samples.size(0)
+        samples_a, samples_b = torch.split(samples, int(batch_size/2), dim=1)
+        alpha = torch.rand_like(samples_a)
+        # Get random interpolation between real and fake samples
+        interpolated_obs = (samples_a * alpha + ((1.0 - alpha) * samples_b)).requires_grad_(True)
+
+        d_interpolates = net(interpolated_obs)
+        grad = torch.ones(samples_b.shape[0], 1, requires_grad=False)
+
+        # Get gradient w.r.t. interpolates
+        gradients = torch.autograd.grad(
+            outputs=d_interpolates,
+            inputs=interpolated_obs,
+            grad_outputs=grad,
+            create_graph=True,
+            retain_graph=True,
+            only_inputs=True,
+        )[0]
+
+        penalty = 0
+        for grads in gradients:
+            grads = grads.view(grads.size(0), -1)
+            # We want the gradients to be close to 0
+            diff = grads.norm(2, dim=1)
+            if LP:
+                penalty = penalty + (torch.max(diff, torch.zeros_like(diff)) ** 2).mean()
+            else:
+                penalty = penalty + (diff ** 2).mean()
+        return penalty
