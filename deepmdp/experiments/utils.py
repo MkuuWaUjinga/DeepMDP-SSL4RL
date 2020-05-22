@@ -22,13 +22,16 @@ class VisdomLinePlotter(object):
         self.plots = {}
         self.xlabel = xlabel
 
-    def plot(self, var_name, split_name, title_name, x, y, erase=False):
+    def plot(self, var_name, split_name, title_name, x, y, color=None):
+        if color is None:
+            color = np.array([[0, 0, 128], ])
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.line(X=np.array([x, x]), Y=np.array([y, y]), env=self.env, opts=dict(
                 title=title_name,
                 xlabel=self.xlabel,
-                ylabel=var_name
+                ylabel=var_name,
+                linecolor=color
             ))
         else:
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name,
-                          update='append')
+                          update='append', opts=dict(linecolor=color))
