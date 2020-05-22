@@ -162,7 +162,7 @@ class DQN(OffPolicyRLAlgorithm):
             self.visdom.plot("episode std q-values", "q-std", "Std of q-values per episode", i, self.episode_std_q_vals[i])
             if i > 100: # i.e. there are more than 100 episodes
                 self.visdom.plot("episode rewards", "rewards", "Rewards per episode", i,
-                                 self.episode_rewards[i-100:i], color=np.array([[0, 0, 128], ]))
+                                 np.mean(self.episode_rewards[i-100:i]), color=np.array([[0, 0, 128], ]))
 
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
