@@ -117,7 +117,7 @@ class DQN(OffPolicyRLAlgorithm):
                 loss += auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
 
 
-        # compute gradient penalty if we have auxiliary objective i.e. we train a DeepMDP
+        # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
             gradient_penalty = 0
             gradient_penalty += self.compute_gradient_penalty(observations, self.qf.encoder)
@@ -125,8 +125,9 @@ class DQN(OffPolicyRLAlgorithm):
                 gradient_penalty += self.compute_gradient_penalty(head, embedding)
                 loss += self.penalty_lambda * gradient_penalty
 
-
-        # TODO log loss curves of auxiliary objectives.
+        if self.auxiliary_objectives:
+            self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+            # TODO log loss curves of auxiliary objectives.
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
@@ -159,6 +160,9 @@ class DQN(OffPolicyRLAlgorithm):
             self.visdom.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
             self.visdom.plot("episode mean q-values", "q-values", "Mean q-values per episode", i, self.episode_mean_q_vals[i])
             self.visdom.plot("episode std q-values", "q-std", "Std of q-values per episode", i, self.episode_std_q_vals[i])
+            if i > 100: # i.e. there are more than 100 episodes
+                self.visdom.plot("episode rewards", "rewards", "Rewards per episode", i,
+                                 self.episode_rewards[i-100:i], color=np.array([[0, 0, 128], ]))
 
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
