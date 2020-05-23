@@ -30,6 +30,10 @@ from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAu
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
 
+@ex.capture
+def get_info(_run):
+    return(_run._id)
+
 @ex.config
 def config():
     snapshot_config = {"snapshot_dir": (os.path.join(os.getcwd(), 'runs/snapshots')),
@@ -139,6 +143,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     algo = DQN(policy=policy,
                qf=qf,
                env_spec=env.spec,
+               experiment_id=get_info(),
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy,
