@@ -25,22 +25,41 @@ class Visualizer:
         self.line_plotter = VisdomLinePlotter(self.viz, env_name=experiment_id)
         self.correlation_plot_window = None
         self.aux_losses = defaultdict(list)
+        self.correlation_matrix = None
+        self.count_correlation_matrix = 0
+
 
     def save_aux_loss(self, loss, loss_type):
         self.aux_losses[loss_type].append(loss)
 
+
     def visualize_aux_losses(self, iteration):
-        self.line_plotter.xlabel = "training iterations"
-        for aux_loss in self.aux_losses:
-            self.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
-        self.aux_losses = defaultdict(list)
+        if self.aux_losses:
+            self.line_plotter.xlabel = "training iterations"
+            for aux_loss in self.aux_losses:
+                self.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
+            self.aux_losses = defaultdict(list)
 
 
-    def visualize_latent_space_correlation(self, embedding, ground_truth_embedding):
+    def save_latent_space(self, embedding, ground_truth_embedding):
         assert embedding.size() == ground_truth_embedding.size()
+        if self.correlation_matrix is None:
+            embedding_dim = embedding.size(1)
+            self.correlation_matrix = torch.zeros((embedding_dim, embedding_dim))
         # Calculate correlation
-        correlation_matrix = self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
-        self.correlation_plot_window = self.viz.heatmap(X=torch.abs(correlation_matrix),
+        self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
+        self.count_correlation_matrix += 1
+
+
+    def visualize_training_results(self, itr):
+        self.visualize_aux_losses(itr)
+        self.visualize_latent_space_correlation()
+
+
+    def visualize_latent_space_correlation(self):
+        if self.correlation_matrix:
+            self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
+            self.correlation_plot_window = self.viz.heatmap(X=torch.abs(self.correlation_matrix),
                                                         env=self.env,
                                                         win=self.correlation_plot_window,
                                                         opts=dict(
@@ -52,6 +71,8 @@ class Visualizer:
                                                             xmax=1.0,
                                                             title="Latent space correlation with ground truth state"
                                                         ))
+            self.correlation_matrix = None
+            self.count_correlation_matrix = 0
 
     @staticmethod
     def calculate_correlation(x1, x2):
@@ -88,7 +109,6 @@ class Visualizer:
 
 
 class VisdomLinePlotter:
-    """Plots to Visdom"""
 
     def __init__(self, viz, env_name='main', xlabel='Iteration'):
         self.viz = viz
