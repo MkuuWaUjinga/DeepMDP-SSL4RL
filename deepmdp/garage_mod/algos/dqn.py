@@ -260,7 +260,8 @@ class DQN(OffPolicyRLAlgorithm):
         samples_a, samples_b = torch.split(samples, int(batch_size/2))
         alpha = torch.rand_like(samples_a)
         # Get random interpolation between real and fake samples
-        interpolated_obs = (samples_a * alpha + ((1.0 - alpha) * samples_b)).requires_grad_(True)
+        interpolated_obs = samples_a * alpha + ((1.0 - alpha) * samples_b)
+        interpolated_obs = torch.autograd.Variable(interpolated_obs, requires_grad=True)
 
         d_interpolates = net(interpolated_obs)
         grad = torch.ones(d_interpolates.size(), requires_grad=False).to(device)
@@ -269,10 +270,7 @@ class DQN(OffPolicyRLAlgorithm):
         gradients = torch.autograd.grad(
             outputs=d_interpolates,
             inputs=interpolated_obs,
-            grad_outputs=grad,
-            create_graph=True,
-            retain_graph=True,
-            only_inputs=True,
+            grad_outputs=grad
         )[0]
 
         gradients = gradients.view(int(batch_size/2), -1)
