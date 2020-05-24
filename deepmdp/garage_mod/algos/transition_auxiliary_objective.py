@@ -28,17 +28,17 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
             w_init(conv.weight)
             b_init(conv.bias)
             zero_pad = torch.nn.ZeroPad2d((0, 1, 0, 1)) # maintain input dimensionality.
-            self.latent_transition_network = torch.nn.Sequential(zero_pad, conv, nonlinearity())
+            self.net = torch.nn.Sequential(zero_pad, conv, nonlinearity())
         else:
-            self.latent_transition_network = MLPModule(input_dim=self.input_dim,
-                             output_dim=self.input_dim * self.action_dim,
-                             hidden_sizes=[512],
-                             hidden_nonlinearity=torch.nn.ReLU,
-                             hidden_w_init=w_init,
-                             hidden_b_init=b_init,
-                             output_nonlinearity=None,
-                             output_w_init=w_init,
-                             output_b_init=b_init)
+            self.net = MLPModule(input_dim=self.input_dim,
+                                 output_dim=self.input_dim * self.action_dim,
+                                 hidden_sizes=[512],
+                                 hidden_nonlinearity=torch.nn.ReLU,
+                                 hidden_w_init=w_init,
+                                 hidden_b_init=b_init,
+                                 output_nonlinearity=None,
+                                 output_w_init=w_init,
+                                 output_b_init=b_init)
 
     def compute_loss(self, embedding, embedding_next_observation, actions):
         """
@@ -48,7 +48,7 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
         :param actions: The actions that caused the embedded next_observations.
         :return: The mean squared error between the predicted and the ground truth embedding of the next observation.
         """
-        preds = self.latent_transition_network(embedding)
+        preds = self.net(embedding)
         batch_size = actions.size(0)
         # Reshape tensor: B x act * channels ... --> B x channels x ... x act
         preds = preds.unsqueeze(len(preds.size())).reshape(batch_size, self.input_dim, *preds.size()[2:4], self.action_dim)

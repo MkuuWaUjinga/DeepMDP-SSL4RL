@@ -127,15 +127,14 @@ class DQN(OffPolicyRLAlgorithm):
                 _, embedding = self.qf(next_observations, return_embedding=True)
                 self.visualizer.save_latent_space(embedding, transitions["ground_truth_state"])
 
-        """
+
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
             gradient_penalty = 0
-            gradient_penalty += self.compute_gradient_penalty(observations, self.qf.encoder)
-            for head in [self.qf.head] + self.auxiliary_objectives:
+            gradient_penalty += self.compute_gradient_penalty(self.qf.encoder, observations)
+            for head in [self.qf.head] + [aux.net for aux in self.auxiliary_objectives]:
                 gradient_penalty += self.compute_gradient_penalty(head, embedding)
-                loss += self.penalty_lambda * gradient_penalty
-        """
+            loss += self.penalty_lambda * gradient_penalty
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
@@ -160,7 +159,7 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
-        # todo log correlation between reward and q-value to see whether the agent's estimation of value was correct.
+        # ? log correlation between reward and q-value to see whether the agent's estimation of value was correct.
         self.episode_rewards.extend(paths['undiscounted_returns'])
         self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
         self.episode_std_q_vals.extend(paths['episode_std_q_vals'])
@@ -258,13 +257,13 @@ class DQN(OffPolicyRLAlgorithm):
         https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
         # Random weight term for interpolation between real and fake samples
         batch_size = samples.size(0)
-        samples_a, samples_b = torch.split(samples, int(batch_size/2), dim=1)
+        samples_a, samples_b = torch.split(samples, int(batch_size/2))
         alpha = torch.rand_like(samples_a)
         # Get random interpolation between real and fake samples
         interpolated_obs = (samples_a * alpha + ((1.0 - alpha) * samples_b)).requires_grad_(True)
 
         d_interpolates = net(interpolated_obs)
-        grad = torch.ones(samples_b.shape[0], 1, requires_grad=False)
+        grad = torch.ones(d_interpolates.size(), requires_grad=False).to(device)
 
         # Get gradient w.r.t. interpolates
         gradients = torch.autograd.grad(
@@ -276,13 +275,7 @@ class DQN(OffPolicyRLAlgorithm):
             only_inputs=True,
         )[0]
 
-        penalty = 0
-        for grads in gradients:
-            grads = grads.view(grads.size(0), -1)
-            # We want the gradients to be close to 0
-            diff = grads.norm(2, dim=1)
-            if LP:
-                penalty = penalty + (torch.max(diff, torch.zeros_like(diff)) ** 2).mean()
-            else:
-                penalty = penalty + (diff ** 2).mean()
+        gradients = gradients.view(int(batch_size/2), -1)
+        gradients_norm = gradients.norm(2, dim=1)
+        penalty = (gradients_norm ** 2).mean()
         return penalty
