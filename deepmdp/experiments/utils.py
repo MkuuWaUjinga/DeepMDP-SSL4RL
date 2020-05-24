@@ -53,7 +53,8 @@ class Visualizer:
                                                             title="Latent space correlation with ground truth state"
                                                         ))
 
-    def calculate_correlation(self, x1, x2):
+    @staticmethod
+    def calculate_correlation(x1, x2):
         """
         takes two 2D tensors of (latent_space_size, sample_size) and calculates the column-wise correlation between the
         two

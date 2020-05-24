@@ -116,7 +116,7 @@ class DQN(OffPolicyRLAlgorithm):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
                 transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
                 loss += transition_loss
-                self.visualizer.save_aux_loss(transition_loss.item(), "transtion loss")
+                self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
                 self.visualizer.visualize_latent_space_correlation(embedding_next_obs, transitions["ground_truth_state"])
 
         """
