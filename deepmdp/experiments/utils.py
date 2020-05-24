@@ -18,8 +18,9 @@ def show_agent_playing(policy, env):
 
 class Visualizer:
 
-    def __init__(self, experiment_id, port=9098):
+    def __init__(self, experiment_id, plot_list, port=9098):
         self.port = 9098
+        self.plot_list = plot_list
         self.viz = Visdom(port=port)
         self.env = experiment_id
         self.line_plotter = VisdomLinePlotter(self.viz, env_name=experiment_id)
@@ -28,6 +29,23 @@ class Visualizer:
         self.correlation_matrix = None
         self.count_correlation_matrix = 0
 
+    def visualize_episodical_stats(self, algo, num_new_episodes):
+        for i in range(len(algo.episode_rewards) - num_new_episodes, len(algo.episode_rewards)):
+            self.line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, algo.episode_rewards[i])
+            self.line_plotter.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
+                                   algo.episode_mean_q_vals[i])
+            self.line_plotter.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
+                                   algo.episode_std_q_vals[i])
+            # Plot running average of rewards
+            if i > 100:
+                self.line_plotter.plot("episode reward", "avg reward", "Rewards per episode", i,
+                                              np.mean(algo.episode_rewards[i-100:i]), color=np.array([[0, 0, 128], ]))
+
+    def visualize_aux(self):
+        return "aux_loss_plot" in self.plot_list
+
+    def visualize_latent_space(self):
+        return "latent_space_correlation_plot" in self.plot_list
 
     def save_aux_loss(self, loss, loss_type):
         self.aux_losses[loss_type].append(loss)
@@ -37,7 +55,7 @@ class Visualizer:
         if self.aux_losses:
             self.line_plotter.xlabel = "training iterations"
             for aux_loss in self.aux_losses:
-                self.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
+                self.line_plotter.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
             self.aux_losses = defaultdict(list)
 
 
@@ -52,13 +70,17 @@ class Visualizer:
 
 
     def visualize_training_results(self, itr):
-        self.visualize_aux_losses(itr)
-        self.visualize_latent_space_correlation()
+        if self.visualize_aux():
+            self.visualize_aux_losses(itr)
+        if self.visualize_latent_space():
+            self.visualize_latent_space_correlation()
 
 
     def visualize_latent_space_correlation(self):
-        if self.correlation_matrix:
+        if self.correlation_matrix is not None:
             self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
+            assert torch.max(self.correlation_matrix).item() <= 1.0 and torch.min(
+                self.correlation_matrix).item() >= -1.0, "Invalid value for correlation coefficient!"
             self.correlation_plot_window = self.viz.heatmap(X=torch.abs(self.correlation_matrix),
                                                         env=self.env,
                                                         win=self.correlation_plot_window,
@@ -102,10 +124,6 @@ class Visualizer:
                 c).item() >= -1.0, "Invalid value for correlation coefficient!"
             return c
 
-    def plot(self, var_name, split_name, title_name, x, y, color=np.array([[255, 136, 0], ])):
-        xlabel = "episode number"
-        self.line_plotter.xlabel = xlabel
-        self.line_plotter.plot(var_name, split_name, title_name, x, y, color)
 
 
 class VisdomLinePlotter:
@@ -117,7 +135,7 @@ class VisdomLinePlotter:
         self.legend = defaultdict(dict)
         self.xlabel = xlabel
 
-    def plot(self, var_name, split_name, title_name, x, y, color):
+    def plot(self, var_name, split_name, title_name, x, y, color=np.array([[255, 136, 0], ])):
         self.legend[var_name][split_name] = None
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.line(X=np.array([x, x]), Y=np.array([y, y]), env=self.env, opts=dict(

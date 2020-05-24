@@ -21,7 +21,8 @@ class DQN(OffPolicyRLAlgorithm):
                  policy,
                  qf: DiscreteCNNQFunction,
                  replay_buffer,
-                 experiment_id,
+                 experiment_id : int,
+                 plot_list : List,
                  exploration_strategy=None,
                  n_epoch_cycles=20,
                  min_buffer_size=int(1e4),
@@ -57,17 +58,20 @@ class DQN(OffPolicyRLAlgorithm):
         self.qf_lr = qf_lr
         self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
         self.target_network_update_freq = target_network_update_freq
-        self.episode_rewards = []
-        self.episode_mean_q_vals = []
-        self.episode_qf_losses = []
-        self.episode_std_q_vals = []
+        self.episode_rewards : List = []
+        self.episode_mean_q_vals : List = []
+        self.episode_qf_losses : List = []
+        self.episode_std_q_vals : List = []
         self.penalty_lambda = penalty_lambda
         # Clone target q-network
         self.target_qf = self.qf.clone()
         self.target_qf.to(device)
         self.qf.to(device)
+
+        # Init visualizer
         self.experiment_id = experiment_id
-        self.visualizer = Visualizer(self.experiment_id)
+        self.plot_list = plot_list
+        self.visualizer = Visualizer(self.experiment_id, self.plot_list)
         self.auxiliary_objectives = auxiliary_objectives
 
         logger.log(f"Number of parameter of q-network are: {sum(p.numel() for p in qf.parameters() if p.requires_grad)}")
@@ -117,8 +121,11 @@ class DQN(OffPolicyRLAlgorithm):
                 transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
                 loss += transition_loss
                 self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
-                self.visualizer.save_latent_space(embedding_next_obs, transitions["ground_truth_state"])
 
+        if self.visualizer.visualize_latent_space():
+            with torch.no_grad():
+                _, embedding = self.qf(next_observations, return_embedding=True)
+                self.visualizer.save_latent_space(embedding, transitions["ground_truth_state"])
 
         """
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
@@ -153,21 +160,12 @@ class DQN(OffPolicyRLAlgorithm):
         paths = self.process_samples(itr, paths)
         epoch = itr / self.n_epoch_cycles
 
-        # log correlation between reward and q-value to see whether the agent's estimation of value was correct.
+        # todo log correlation between reward and q-value to see whether the agent's estimation of value was correct.
         self.episode_rewards.extend(paths['undiscounted_returns'])
         self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
         self.episode_std_q_vals.extend(paths['episode_std_q_vals'])
 
-        for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
-            self.visualizer.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
-            self.visualizer.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
-                                          self.episode_mean_q_vals[i])
-            self.visualizer.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
-                                          self.episode_std_q_vals[i])
-            # Plot running average of rewards
-            if i > 100:
-                self.visualizer.plot("episode reward", "avg reward", "Rewards per episode", i,
-                                              np.mean(self.episode_rewards[i-100:i]), color=np.array([[0, 0, 128], ]))
+        self.visualizer.visualize_episodical_stats(self, len(paths["undiscounted_returns"]))
 
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
@@ -252,7 +250,7 @@ class DQN(OffPolicyRLAlgorithm):
     def __setstate__(self, state):
         """Restore state from the unpickled state values."""
         self.__dict__ = state
-        self.visualizer =  Visualizer(self.experiment_id)
+        self.visualizer =  Visualizer(self.experiment_id, self.plot_list)
 
 
     def compute_gradient_penalty(self, net, samples, LP=False):

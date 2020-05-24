@@ -140,10 +140,12 @@ def run_task(snapshot_config, env_name, dqn_config):
         aux_objectives.append(transition_objective)
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
+    plot_list = ["latent_space_correlation_plot", "aux_loss_plot"]
     algo = DQN(policy=policy,
                qf=qf,
                env_spec=env.spec,
                experiment_id=get_info(),
+               plot_list=plot_list,
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy,
