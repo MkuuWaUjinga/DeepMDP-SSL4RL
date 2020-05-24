@@ -24,6 +24,17 @@ class Visualizer:
         self.env = experiment_id
         self.line_plotter = VisdomLinePlotter(self.viz, env_name=experiment_id)
         self.correlation_plot_window = None
+        self.aux_losses = defaultdict(list)
+
+    def save_aux_loss(self, loss, loss_type):
+        self.aux_losses[loss_type].append(loss)
+
+    def visualize_aux_losses(self, iteration):
+        self.line_plotter.xlabel = "training iterations"
+        for aux_loss in self.aux_losses:
+            self.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
+        self.aux_losses = defaultdict(list)
+
 
     def visualize_latent_space_correlation(self, embedding, ground_truth_embedding):
         assert embedding.size() == ground_truth_embedding.size()
@@ -38,7 +49,8 @@ class Visualizer:
                                                             rownames=['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'],
                                                             colormap='Viridis',
                                                             xmin=0,
-                                                            xmax=1.0
+                                                            xmax=1.0,
+                                                            title="Latent space correlation with ground truth state"
                                                         ))
 
     def calculate_correlation(self, x1, x2):

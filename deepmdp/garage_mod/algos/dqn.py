@@ -106,18 +106,18 @@ class DQN(OffPolicyRLAlgorithm):
         q_selected = torch.sum(qval * actions_one_hot, axis=1)
 
         loss = 0
-        # TODO log loss curves of auxiliary objectives. Use vis.dual_axis_line
-
         for auxiliary_objective in self.auxiliary_objectives:
             if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
                 flattened_embedding = embedding.view(embedding.size(0), -1)
-                loss += auxiliary_objective.compute_loss(flattened_embedding, rewards, actions_one_hot)
+                reward_loss = auxiliary_objective.compute_loss(flattened_embedding, rewards, actions_one_hot)
+                loss += reward_loss
+                self.visualizer.save_aux_loss(reward_loss.item(), "reward loss")
             elif isinstance(auxiliary_objective, TransitionAuxiliaryObjective):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
-                loss += auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
-
+                transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
+                loss += transition_loss
+                self.visualizer.save_aux_loss(transition_loss.item(), "transtion loss")
                 self.visualizer.visualize_latent_space_correlation(embedding_next_obs, transitions["ground_truth_state"])
-
 
         """
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
@@ -180,6 +180,7 @@ class DQN(OffPolicyRLAlgorithm):
             if self._buffer_prefilled:
                 qf_loss = self.optimize_policy(itr, None)
                 self.episode_qf_losses.append(qf_loss.item())
+        self.visualizer.visualize_aux_losses(self.n_train_steps * itr)
 
         if self._buffer_prefilled:
             if itr % self.target_network_update_freq == 0:
