@@ -6,7 +6,7 @@ from dowel import tabular, logger
 from garage.np.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.misc.tensor_utils import normalize_pixel_batch
 from garage.torch.utils import np_to_torch
-from deepmdp.experiments.utils import VisdomLinePlotter
+from deepmdp.experiments.utils import Visualizer
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
@@ -66,7 +66,8 @@ class DQN(OffPolicyRLAlgorithm):
         self.target_qf = self.qf.clone()
         self.target_qf.to(device)
         self.qf.to(device)
-        self.visdom_line_plotter = VisdomLinePlotter(9098, xlabel="episode number", env_name=experiment_id)
+        self.experiment_id = experiment_id
+        self.visualizer = Visualizer(self.experiment_id)
         self.auxiliary_objectives = auxiliary_objectives
 
         logger.log(f"Number of parameter of q-network are: {sum(p.numel() for p in qf.parameters() if p.requires_grad)}")
@@ -92,10 +93,6 @@ class DQN(OffPolicyRLAlgorithm):
         next_observations = transitions['next_observation']
         dones = transitions['terminal'].to(device)
 
-        if "obfuscated_state" in transitions:
-            state = transitions["obfuscated_state"]
-            # TODO log correlation of obfuscated state and embedding of next_observation
-
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
             target_qvals, _ =  torch.max(target_qvals, dim=1)
@@ -109,7 +106,7 @@ class DQN(OffPolicyRLAlgorithm):
         q_selected = torch.sum(qval * actions_one_hot, axis=1)
 
         loss = 0
-        # TODO log loss curves of auxiliary objectives.
+        # TODO log loss curves of auxiliary objectives. Use vis.dual_axis_line
 
         for auxiliary_objective in self.auxiliary_objectives:
             if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
@@ -119,8 +116,10 @@ class DQN(OffPolicyRLAlgorithm):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
                 loss += auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
 
-                self.visdom_line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+                self.visualizer.visualize_latent_space_correlation(embedding_next_obs, transitions["ground_truth_state"])
 
+
+        """
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
             gradient_penalty = 0
@@ -128,6 +127,7 @@ class DQN(OffPolicyRLAlgorithm):
             for head in [self.qf.head] + self.auxiliary_objectives:
                 gradient_penalty += self.compute_gradient_penalty(head, embedding)
                 loss += self.penalty_lambda * gradient_penalty
+        """
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
@@ -156,15 +156,16 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_rewards.extend(paths['undiscounted_returns'])
         self.episode_mean_q_vals.extend(paths['episode_mean_q_vals'])
         self.episode_std_q_vals.extend(paths['episode_std_q_vals'])
+
         for i in range(len(self.episode_rewards) - len(paths["undiscounted_returns"]), len(self.episode_rewards)):
-            self.visdom_line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
-            self.visdom_line_plotter.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
+            self.visualizer.plot("episode reward", "rewards", "Rewards per episode", i, self.episode_rewards[i])
+            self.visualizer.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
                                           self.episode_mean_q_vals[i])
-            self.visdom_line_plotter.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
+            self.visualizer.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
                                           self.episode_std_q_vals[i])
             # Plot running average of rewards
             if i > 100:
-                self.visdom_line_plotter.plot("episode reward", "avg reward", "Rewards per episode", i,
+                self.visualizer.plot("episode reward", "avg reward", "Rewards per episode", i,
                                               np.mean(self.episode_rewards[i-100:i]), color=np.array([[0, 0, 128], ]))
 
         # Decay epsilon of exploration strategy manually for each finished episode.
@@ -239,15 +240,17 @@ class DQN(OffPolicyRLAlgorithm):
         return self.replay_buffer.n_transitions_stored >= self.min_buffer_size
 
     def __getstate__(self):
-        """Return state values to be pickled."""
+        """Return state values to be pickled. Pickling visdom throws an error using pickle or cloudpickle.
+        --> Remove it from state values."""
         data = self.__dict__.copy()
-        del data['visdom']
+        del data['visualizer']
         return data
 
     def __setstate__(self, state):
         """Restore state from the unpickled state values."""
         self.__dict__ = state
-        self.visdom_line_plotter = VisdomLinePlotter(9098, xlabel="episode number")
+        self.visualizer =  Visualizer(self.experiment_id)
+
 
     def compute_gradient_penalty(self, net, samples, LP=False):
         """Calculates the gradient penalty loss for WGAN GP, adapt for WGAN-LP

@@ -136,8 +136,8 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     "terminal": dones,
                     "next_observation": next_obses
                 }
-                if env_infos and env_infos[0].get("obfuscated_state_info") is not None:
-                    payload["obfuscated_state"] = [env_info.get("obfuscated_state_info") for env_info in env_infos]
+                if env_infos and env_infos[0].get("ground_truth_state") is not None:
+                    payload["ground_truth_state"] = [env_info.get("ground_truth_state") for env_info in env_infos]
                 self.algo.replay_buffer.add_transitions(
                     **payload
                 )

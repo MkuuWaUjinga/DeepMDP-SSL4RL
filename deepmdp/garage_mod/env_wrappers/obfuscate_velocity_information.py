@@ -53,5 +53,5 @@ class ObfuscateVelocityInformation(gym.Wrapper):
     def step(self, action):
         """gym.Env step function."""
         obs, reward, done, info = self.env.step(action)
-        info["obfuscated_state_info"] = obs[~self._state_selection_mask]
+        info["ground_truth_state"] = obs
         return self._observation(obs), reward, done, info
