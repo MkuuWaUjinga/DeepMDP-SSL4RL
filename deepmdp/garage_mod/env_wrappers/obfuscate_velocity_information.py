@@ -25,9 +25,10 @@ class ObfuscateVelocityInformation(gym.Wrapper):
         "leg_two_has_ground_contact": 7
     }
 
-    def __init__(self, env):
+    def __init__(self, env, no_obf=False):
         assert env.spec.id == 'LunarLander-v2'
         super().__init__(env)
+        self.no_obf = no_obf
         self._observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(5,), dtype=np.float32)
         self._state_selection_mask = np.ones(8, dtype=bool)
         self._state_selection_mask[[self.state_meaning_to_index["velocity_x"],
@@ -44,7 +45,7 @@ class ObfuscateVelocityInformation(gym.Wrapper):
         self._observation_space = observation_space
 
     def _observation(self, obs):
-        return obs[self._state_selection_mask]
+        return obs[self._state_selection_mask] if not self.no_obf else obs
 
     def reset(self):
         """gym.Env reset function."""
