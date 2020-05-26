@@ -122,11 +122,7 @@ class DQN(OffPolicyRLAlgorithm):
                 loss += transition_loss
                 self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
 
-        if self.visualizer.visualize_latent_space():
-            with torch.no_grad():
-                _, embedding = self.qf(next_observations, return_embedding=True)
-                self.visualizer.save_latent_space(embedding, transitions["ground_truth_state"])
-
+        self.visualizer.save_latent_space(self, next_observations, transitions.get("ground_truth_state"))
 
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
