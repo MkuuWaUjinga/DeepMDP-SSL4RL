@@ -62,9 +62,10 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_qf_losses : List = []
         self.episode_std_q_vals : List = []
         self.penalty_lambda = penalty_lambda
+
         # Clone target q-network
         self.target_qf = self.qf.clone()
-        self.target_qf.eval()
+
         self.target_qf.to(device)
         self.qf.to(device)
 
@@ -226,15 +227,8 @@ class DQN(OffPolicyRLAlgorithm):
 
         return samples_data
 
-    def update_target(self, tau:int=1):
-        """
-        Update target network with q-network's parameters.
-        :param tau: Fraction to update. Default is hard update.
-        """
-        for t_param, param in zip(self.target_qf.parameters(),
-                                  self.qf.parameters()):
-            t_param.data.copy_(t_param.data * (1.0 - tau) +
-                               param.data * tau)
+    def update_target(self):
+        self.target_qf.load_state_dict(self.qf.state_dict())
 
     @property
     def _buffer_prefilled(self):

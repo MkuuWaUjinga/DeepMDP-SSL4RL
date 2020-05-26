@@ -96,12 +96,13 @@ class MultiHeadedMLPModule(nn.Module):
         self._output_layers = nn.ModuleList()
         for i in range(n_heads):
             output_layer = nn.Sequential()
-            if layer_normalization == "batch":
-                output_layer.add_module('normalization',
-                                         nn.BatchNorm1d(prev_size))
-            elif layer_normalization == "layer":
-                output_layer.add_module('normalization',
-                                         nn.LayerNorm(prev_size))
+            if output_normalization:
+                if layer_normalization == "batch":
+                    output_layer.add_module('normalization',
+                                             nn.BatchNorm1d(prev_size))
+                elif layer_normalization == "layer":
+                    output_layer.add_module('normalization',
+                                             nn.LayerNorm(prev_size))
             linear_layer = nn.Linear(prev_size, output_dims[i])
             output_w_inits[i](linear_layer.weight)
             output_b_inits[i](linear_layer.bias)
