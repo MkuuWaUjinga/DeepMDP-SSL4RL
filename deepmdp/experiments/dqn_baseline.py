@@ -89,6 +89,12 @@ def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames
     env = StackFrames(env, number_of_stacked_frames)
     return GarageEnv(env)
 
+def setup_stacked_lunar_lander_env(env_name):
+    from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
+    env = gym.make(env_name)
+    env = ObfuscateVelocityInformation(env, no_obf=True)
+    env = StackFrames(env, 4)
+    return GarageEnv(env)
 
 def run_task(snapshot_config, env_name, dqn_config):
     logger.log(f"Config of this experiment is {dqn_config}")
@@ -104,6 +110,7 @@ def run_task(snapshot_config, env_name, dqn_config):
     net_config = dqn_config.get("net")
     deepmdp_config = dqn_config.get("deepmdp")
     epsilon_greedy_config = dqn_config.get("epsilon_greedy")
+    plots = dqn_config.get("plots")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
 
     if "LunarLander-v2" in env_name:
@@ -112,6 +119,8 @@ def run_task(snapshot_config, env_name, dqn_config):
             env = setup_lunar_lander_with_image_obs(env_name[:-4])
         elif env_name[-4:] == "-obf":
             env = setup_lunar_lander_with_obfuscated_states(env_name[:-4])
+        elif env_name[-4:] == "-stk":
+            env = setup_stacked_lunar_lander_env(env_name[:-4])
         else:
             env = GarageEnv(gym.make(env_name))
     else:
@@ -140,12 +149,11 @@ def run_task(snapshot_config, env_name, dqn_config):
         aux_objectives.append(transition_objective)
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
-    plot_list = ["latent_space_correlation_plot", "aux_loss_plot"]
     algo = DQN(policy=policy,
                qf=qf,
                env_spec=env.spec,
                experiment_id=get_info(),
-               plot_list=plot_list,
+               plot_list=plots,
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy,

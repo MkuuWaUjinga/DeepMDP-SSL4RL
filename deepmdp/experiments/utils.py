@@ -30,16 +30,18 @@ class Visualizer:
         self.count_correlation_matrix = 0
 
     def visualize_episodical_stats(self, algo, num_new_episodes):
-        for i in range(len(algo.episode_rewards) - num_new_episodes, len(algo.episode_rewards)):
-            self.line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, algo.episode_rewards[i])
-            self.line_plotter.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
-                                   algo.episode_mean_q_vals[i])
-            self.line_plotter.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
-                                   algo.episode_std_q_vals[i])
-            # Plot running average of rewards
-            if i > 100:
-                self.line_plotter.plot("episode reward", "avg reward", "Rewards per episode", i,
-                                              np.mean(algo.episode_rewards[i-100:i]), color=np.array([[0, 0, 128], ]))
+        if self.visualize_stats():
+            for i in range(len(algo.episode_rewards) - num_new_episodes, len(algo.episode_rewards)):
+                self.line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, algo.episode_rewards[i])
+                self.line_plotter.plot("episode mean q-values", "q-values", "Mean q-values per episode", i,
+                                       algo.episode_mean_q_vals[i])
+                self.line_plotter.plot("episode std q-values", "q-std", "Std of q-values per episode", i,
+                                       algo.episode_std_q_vals[i])
+                # Plot running average of rewards
+                if i > 100:
+                    self.line_plotter.plot("episode reward", "avg reward", "Rewards per episode", i,
+                                           np.mean(algo.episode_rewards[i - 100:i]),
+                                           color=np.array([[0, 0, 128], ]))
 
     def visualize_aux(self):
         return "aux_loss_plot" in self.plot_list
@@ -47,9 +49,12 @@ class Visualizer:
     def visualize_latent_space(self):
         return "latent_space_correlation_plot" in self.plot_list
 
-    def save_aux_loss(self, loss, loss_type):
-        self.aux_losses[loss_type].append(loss)
+    def visualize_stats(self):
+        return "episodical_stats" in self.plot_list
 
+    def save_aux_loss(self, loss, loss_type):
+        if self.visualize_aux():
+            self.aux_losses[loss_type].append(loss)
 
     def visualize_aux_losses(self, iteration):
         if self.aux_losses:
@@ -58,16 +63,19 @@ class Visualizer:
                 self.line_plotter.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
             self.aux_losses = defaultdict(list)
 
-
-    def save_latent_space(self, embedding, ground_truth_embedding):
-        assert embedding.size() == ground_truth_embedding.size()
-        if self.correlation_matrix is None:
-            embedding_dim = embedding.size(1)
-            self.correlation_matrix = torch.zeros((embedding_dim, embedding_dim))
-        # Calculate correlation
-        self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
-        self.count_correlation_matrix += 1
-
+    def save_latent_space(self, algo, next_obs, ground_truth_embedding):
+        if self.visualize_latent_space():
+            if ground_truth_embedding is None:
+                raise ValueError("Ground truth embedding mustn't be of None type")
+            with torch.no_grad():
+                _, embedding = algo.qf(next_obs, return_embedding=True)
+            assert embedding.size() == ground_truth_embedding.size()
+            if self.correlation_matrix is None:
+                embedding_dim = embedding.size(1)
+                self.correlation_matrix = torch.zeros((embedding_dim, embedding_dim))
+            # Calculate correlation
+            self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
+            self.count_correlation_matrix += 1
 
     def visualize_training_results(self, itr):
         if self.visualize_aux():
@@ -75,24 +83,24 @@ class Visualizer:
         if self.visualize_latent_space():
             self.visualize_latent_space_correlation()
 
-
     def visualize_latent_space_correlation(self):
         if self.correlation_matrix is not None:
             self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
             assert torch.max(self.correlation_matrix).item() <= 1.0 and torch.min(
                 self.correlation_matrix).item() >= -1.0, "Invalid value for correlation coefficient!"
             self.correlation_plot_window = self.viz.heatmap(X=torch.abs(self.correlation_matrix),
-                                                        env=self.env,
-                                                        win=self.correlation_plot_window,
-                                                        opts=dict(
-                                                            columnnames=["pos_x", "pos_y", "vel_x", "vel_y", "ang",
-                                                                         "ang_vel", "leg_1", "leg_2"],
-                                                            rownames=['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'],
-                                                            colormap='Viridis',
-                                                            xmin=0,
-                                                            xmax=1.0,
-                                                            title="Latent space correlation with ground truth state"
-                                                        ))
+                                                            env=self.env,
+                                                            win=self.correlation_plot_window,
+                                                            opts=dict(
+                                                                columnnames=["pos_x", "pos_y", "vel_x", "vel_y", "ang",
+                                                                             "ang_vel", "leg_1", "leg_2"],
+                                                                rownames=['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7',
+                                                                          'l8'],
+                                                                colormap='Viridis',
+                                                                xmin=0,
+                                                                xmax=1.0,
+                                                                title="Latent space correlation with ground truth state"
+                                                            ))
             self.correlation_matrix = None
             self.count_correlation_matrix = 0
 
@@ -123,7 +131,6 @@ class Visualizer:
             assert torch.max(c).item() <= 1.0 and torch.min(
                 c).item() >= -1.0, "Invalid value for correlation coefficient!"
             return c
-
 
 
 class VisdomLinePlotter:
