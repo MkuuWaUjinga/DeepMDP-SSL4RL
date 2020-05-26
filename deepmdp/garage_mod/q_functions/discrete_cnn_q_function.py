@@ -76,6 +76,7 @@ class DiscreteCNNQFunction(nn.Module):
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
         self.obs_dim = self._env_spec.observation_space.shape
+        self._layer_norm = layer_norm
 
         super(DiscreteCNNQFunction, self).__init__()
 
@@ -101,7 +102,7 @@ class DiscreteCNNQFunction(nn.Module):
                 output_nonlinearity=self._output_nonlinearity,
                 output_w_init=self._output_w_init,
                 output_b_init=self._output_b_init,
-                layer_normalization=layer_norm
+                layer_normalization=self._layer_norm
             )
 
         # Init Mlp
@@ -114,7 +115,7 @@ class DiscreteCNNQFunction(nn.Module):
                               output_nonlinearity=self._output_nonlinearity,
                               output_w_init=self._output_w_init,
                               output_b_init=self._output_b_init,
-                              layer_normalization=layer_norm)
+                              layer_normalization=self._layer_norm)
 
     # Infer shape of tensor passed to mlp
     def _get_conv_output(self, shape):
@@ -162,4 +163,5 @@ class DiscreteCNNQFunction(nn.Module):
                               hidden_b_init=self._hidden_b_init,
                               output_nonlinearity=self._output_nonlinearity,
                               output_w_init=self._output_w_init,
-                              output_b_init=self._output_b_init)
+                              output_b_init=self._output_b_init,
+                              layer_norm=self._layer_norm)
