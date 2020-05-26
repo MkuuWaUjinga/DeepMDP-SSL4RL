@@ -67,8 +67,10 @@ class Visualizer:
         if self.visualize_latent_space():
             if ground_truth_embedding is None:
                 raise ValueError("Ground truth embedding mustn't be of None type")
+            algo.qf.eval()
             with torch.no_grad():
                 _, embedding = algo.qf(next_obs, return_embedding=True)
+            algo.qf.train()
             assert embedding.size() == ground_truth_embedding.size()
             if self.correlation_matrix is None:
                 embedding_dim = embedding.size(1)

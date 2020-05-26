@@ -1,7 +1,7 @@
 import torch
-import numpy as np
 from torch import nn
-from garage.torch.modules.mlp_module import MLPModule
+from dowel import logger
+from deepmdp.garage_mod.modules.mlp_module import MLPModule
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -102,7 +102,8 @@ class DiscreteCNNQFunction(nn.Module):
                 output_nonlinearity=self._output_nonlinearity,
                 output_w_init=self._output_w_init,
                 output_b_init=self._output_b_init,
-                layer_normalization=self._layer_norm
+                layer_normalization=self._layer_norm,
+                output_normalization=self._layer_norm
             )
 
         # Init Mlp
@@ -115,15 +116,21 @@ class DiscreteCNNQFunction(nn.Module):
                               output_nonlinearity=self._output_nonlinearity,
                               output_w_init=self._output_w_init,
                               output_b_init=self._output_b_init,
-                              layer_normalization=self._layer_norm)
+                              layer_normalization=self._layer_norm,
+                              output_normalization=False)
+        logger.log(f"Encoder is {self.encoder}")
+        logger.log(f"Head is {self.head}")
+
 
     # Infer shape of tensor passed to mlp
     def _get_conv_output(self, shape):
+        self.eval()
         with torch.no_grad():
             input = torch.autograd.Variable(torch.rand(1, *shape))
             output_feat = self.encoder(input)
             n_size = output_feat.data.view(1, -1).size(1)
-            return n_size
+        self.train()
+        return n_size
 
     # pylint: disable=arguments-differ
     def forward(self, x, return_embedding=False):

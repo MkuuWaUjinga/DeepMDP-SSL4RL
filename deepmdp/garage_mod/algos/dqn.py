@@ -56,7 +56,6 @@ class DQN(OffPolicyRLAlgorithm):
                                   input_include_goal=input_include_goal,
                                   smooth_return=smooth_return)
         self.qf_lr = qf_lr
-        self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr)
         self.target_network_update_freq = target_network_update_freq
         self.episode_rewards : List = []
         self.episode_mean_q_vals : List = []
@@ -65,6 +64,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.penalty_lambda = penalty_lambda
         # Clone target q-network
         self.target_qf = self.qf.clone()
+        self.target_qf.eval()
         self.target_qf.to(device)
         self.qf.to(device)
 
@@ -73,6 +73,9 @@ class DQN(OffPolicyRLAlgorithm):
         self.plot_list = plot_list
         self.visualizer = Visualizer(self.experiment_id, self.plot_list)
         self.auxiliary_objectives = auxiliary_objectives
+
+        self.qf_optimizer = qf_optimizer(qf.parameters(), lr=qf_lr) # TODO add deepmdp params to optimizer!!!
+
 
         logger.log(f"Number of parameter of q-network are: {sum(p.numel() for p in qf.parameters() if p.requires_grad)}")
 
@@ -167,7 +170,8 @@ class DQN(OffPolicyRLAlgorithm):
             for complete in paths["complete"]:
                 if complete:
                     self.es._decay(episode_done=True)
-                    logger.log(f"Epsilon after episode {len(self.episode_rewards)} is {self.es._epsilon}")
+                    path_length = paths["path_lengths"]
+                    logger.log(f"Episode: {len(self.episode_rewards)} --- Episode length: {path_length} --- Epsilon: {self.es._epsilon}")
 
         last_average_return = np.mean(self.episode_rewards) if self.episode_rewards else 0
         for _ in range(self.n_train_steps):
@@ -210,12 +214,14 @@ class DQN(OffPolicyRLAlgorithm):
         undiscounted_returns = [path['undiscounted_return'] for path in paths if path['dones'][-1]]
         episode_mean_q_vals = [np.mean(path['q_vals']) for path in paths if path['dones'][-1]]
         episode_std_q_vals = [np.std(path["q_vals"]) for path in paths if path['dones'][-1]]
+        path_lengths = [len(path['q_vals']) for path in paths if path['dones'][-1]]
 
         complete = [path['dones'][-1] for path in paths]
 
         samples_data = dict(undiscounted_returns=undiscounted_returns,
                             episode_mean_q_vals=episode_mean_q_vals,
                             episode_std_q_vals=episode_std_q_vals,
+                            path_lengths=path_lengths,
                             complete=complete)
 
         return samples_data
@@ -247,8 +253,8 @@ class DQN(OffPolicyRLAlgorithm):
         self.__dict__ = state
         self.visualizer =  Visualizer(self.experiment_id, self.plot_list)
 
-
-    def compute_gradient_penalty(self, net, samples, LP=False):
+    @staticmethod
+    def compute_gradient_penalty(net, samples):
         """Calculates the gradient penalty loss for WGAN GP, adapt for WGAN-LP
         https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
         # Random weight term for interpolation between real and fake samples
