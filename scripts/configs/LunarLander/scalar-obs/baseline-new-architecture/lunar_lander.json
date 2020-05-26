@@ -1,5 +1,5 @@
 {
-    "env_name": "LunarLander-v2",
+    "env_name": "LunarLander-v2-stk",
     "dqn_config": {
         "learning_rate": 0.0001,
         "replay_buffer_size": 65536,
@@ -17,7 +17,8 @@
             },
             "head": {
                 "dense_sizes": [256, 128]
-            }
+            },
+            "layer_norm": false
         },
         "epsilon_greedy": {
             "max_epsilon": 1.0,
@@ -27,7 +28,10 @@
             "episodical_decay": true
         },
         "deepmdp": {
-            "use": false
-        }
+            "use": false,
+            "use_linear_transition_net": true,
+            "primary_embedding_dim_size": 8
+        },
+        "plots": ["episodical_stats"]
     }
 }
