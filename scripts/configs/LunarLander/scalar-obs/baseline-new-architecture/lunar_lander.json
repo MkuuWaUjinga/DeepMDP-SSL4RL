@@ -2,12 +2,12 @@
     "env_name": "LunarLander-v2-stk",
     "dqn_config": {
         "learning_rate": 0.0001,
-        "replay_buffer_size": 65536,
+        "replay_buffer_size": 100000,
         "buffer_batch_size": 32,
         "n_train_steps": 1,
         "n_epochs": 1,
         "sampler_batch_size": 1,
-        "steps_per_epoch": 320000,
+        "steps_per_epoch": 700000,
         "min_buffer_size": 64,
         "target_network_update_freq": 10,
         "net": {

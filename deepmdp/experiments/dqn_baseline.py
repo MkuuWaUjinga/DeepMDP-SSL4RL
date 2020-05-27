@@ -172,7 +172,8 @@ def run_task(snapshot_config, env_name, dqn_config):
     runner.setup(algo=algo, env=env)
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
-    env.close()
+    # Bypass GarageEnv>>close as this requires a display
+    env.env.close()
 
 @ex.main
 def run(snapshot_config, env_name, dqn_config):
