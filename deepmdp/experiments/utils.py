@@ -56,8 +56,8 @@ class Visualizer:
         if self.visualize_aux():
             self.aux_losses[loss_type].append(loss)
 
-    def visualize_aux_losses(self, iteration):
-        if self.aux_losses:
+    def visualize_aux_losses(self, iteration, min_samples=500):
+        if self.aux_losses and all(len(self.aux_losses[aux_loss]) > min_samples for aux_loss in self.aux_losses):
             self.line_plotter.xlabel = "training iterations"
             for aux_loss in self.aux_losses:
                 self.line_plotter.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
