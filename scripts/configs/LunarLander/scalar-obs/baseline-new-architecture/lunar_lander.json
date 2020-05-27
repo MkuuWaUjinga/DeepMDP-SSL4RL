@@ -28,10 +28,10 @@
             "episodical_decay": true
         },
         "deepmdp": {
-            "use": false,
+            "use": true,
             "use_linear_transition_net": true,
             "primary_embedding_dim_size": 8
         },
-        "plots": ["episodical_stats"]
+        "plots": ["episodical_stats", "aux_loss_plot"]
     }
 }

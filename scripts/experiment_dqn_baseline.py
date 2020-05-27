@@ -18,4 +18,4 @@ def start_exp(config_path):
     ex.run()
 
 if __name__=="__main__":
-    start_exp("configs/LunarLander/obf-state-obs/lunar_lander.json")
+    start_exp("configs/LunarLander/scalar-obs/baseline-new-architecture/lunar_lander.json")
