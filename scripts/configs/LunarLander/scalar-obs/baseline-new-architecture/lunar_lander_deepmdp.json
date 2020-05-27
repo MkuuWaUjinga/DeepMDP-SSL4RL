@@ -3,10 +3,10 @@
     "dqn_config": {
         "learning_rate": 0.0001,
         "replay_buffer_size": 100000,
-        "buffer_batch_size": 500,
+        "buffer_batch_size": 32,
         "n_train_steps": 500,
         "n_epochs": 100,
-        "sampler_batch_size": 32,
+        "sampler_batch_size": 500,
         "steps_per_epoch": 20,
         "min_buffer_size": 64,
         "target_network_update_freq": 10,
