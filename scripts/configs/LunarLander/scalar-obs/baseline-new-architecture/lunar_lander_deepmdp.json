@@ -24,8 +24,7 @@
             "max_epsilon": 1.0,
             "min_epsilon": 0.05,
             "decay_ratio": 0.1,
-            "exponential_decay_rate": 0.995,
-            "episodical_decay": true
+            "episodical_decay": false
         },
         "deepmdp": {
             "use": true,
