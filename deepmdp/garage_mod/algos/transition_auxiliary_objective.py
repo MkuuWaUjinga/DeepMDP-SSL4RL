@@ -1,5 +1,5 @@
 import torch
-
+from dowel import logger
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
 from garage.torch.modules.mlp_module import MLPModule
 
@@ -39,6 +39,7 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
                                  output_nonlinearity=None,
                                  output_w_init=w_init,
                                  output_b_init=b_init)
+        logger.log(f"Transition net: {self.net}")
 
     def compute_loss(self, embedding, embedding_next_observation, actions):
         """

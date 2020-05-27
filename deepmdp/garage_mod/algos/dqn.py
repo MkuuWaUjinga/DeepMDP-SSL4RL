@@ -77,8 +77,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.auxiliary_objectives = auxiliary_objectives
 
         params = [self.qf.parameters()] + [aux.net.parameters() for aux in self.auxiliary_objectives]
-        self.qf_optimizer = qf_optimizer(chain(*params),
-                                         lr=qf_lr)  # TODO add deepmdp params to optimizer!!!
+        self.qf_optimizer = qf_optimizer(chain(*params), lr=qf_lr)
 
         num_params = sum(p.numel() for p in chain(*[self.qf.parameters()] +
                                                    [aux.net.parameters() for aux in self.auxiliary_objectives]) if
