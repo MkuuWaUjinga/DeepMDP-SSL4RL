@@ -86,7 +86,6 @@ class OffPolicyVectorizedSampler(BatchSampler):
             self.algo.es.reset()
 
         while n_samples < batch_size:
-            #self.vec_env.envs[0].render()
             policy.reset(dones)
             if self.algo.input_include_goal:
                 obs = [obs['observation'] for obs in obses]
