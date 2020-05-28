@@ -28,7 +28,8 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
             output_nonlinearity=self._output_nonlinearity,
             output_w_init=self._output_w_init,
             output_b_init=self._output_b_init
-        ).to(device) # fully-connected 1 x num_actions outputs
+        ) # fully-connected 1 x num_actions outputs
+        self.net.to(device)
 
         logger.log(f"Reward net: {self.net}")
 

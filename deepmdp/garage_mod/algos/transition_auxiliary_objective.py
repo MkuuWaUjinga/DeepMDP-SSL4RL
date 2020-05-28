@@ -39,6 +39,8 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
                                  output_nonlinearity=None,
                                  output_w_init=w_init,
                                  output_b_init=b_init)
+        self.net.to(device)
+
         logger.log(f"Transition net: {self.net}")
 
     def compute_loss(self, embedding, embedding_next_observation, actions):
