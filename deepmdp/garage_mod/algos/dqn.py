@@ -99,10 +99,10 @@ class DQN(OffPolicyRLAlgorithm):
         # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
         # creation around 10 times faster.
         transitions = np_to_torch(transitions)
-        observations = transitions['observation']
+        observations = transitions['observation'].to(device)
         rewards = transitions['reward'].to(device)
         actions = transitions['action'].to(device)
-        next_observations = transitions['next_observation']
+        next_observations = transitions['next_observation'].to(device)
         dones = transitions['terminal'].to(device)
 
         with torch.no_grad():
@@ -150,7 +150,8 @@ class DQN(OffPolicyRLAlgorithm):
 
     @staticmethod
     def one_hot(actions, action_dim) -> torch.Tensor:
-        return torch.zeros((len(actions), action_dim)).scatter_(1, actions.long().unsqueeze(1), 1).to(device)
+        zeros = torch.zeros((len(actions), action_dim)).to(device)
+        return zeros.scatter_(1, actions.long().unsqueeze(1), 1)
 
     def train_once(self, itr, paths):
         """Perform one step of policy optimization given one batch of samples.

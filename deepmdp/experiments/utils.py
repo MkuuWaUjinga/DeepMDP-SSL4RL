@@ -18,6 +18,9 @@ def show_agent_playing(policy, env):
 
 class Visualizer:
 
+    # TODO plot episode lengths
+    # TODO plot distribution over chosen actions.
+
     def __init__(self, experiment_id, plot_list, port=9098):
         self.port = 9098
         self.plot_list = plot_list
@@ -137,7 +140,7 @@ class Visualizer:
 
 class VisdomLinePlotter:
 
-    def __init__(self, viz, env_name='main', xlabel='Iteration'):
+    def __init__(self, viz, env_name='main', xlabel='episode number'):
         self.viz = viz
         self.env = env_name
         self.plots = {}
