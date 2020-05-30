@@ -7,7 +7,7 @@
         "n_train_steps": 1,
         "n_epochs": 1,
         "sampler_batch_size": 1,
-        "steps_per_epoch": 700000,
+        "steps_per_epoch": 1000000,
         "min_buffer_size": 64,
         "target_network_update_freq": 10,
         "net": {
@@ -28,10 +28,10 @@
             "episodical_decay": true
         },
         "deepmdp": {
-            "use": true,
+            "use": false,
             "use_linear_transition_net": true,
             "primary_embedding_dim_size": 8
         },
-        "plots": ["episodical_stats", "aux_loss_plot"]
+        "plots": ["episodical_stats"]
     }
 }
