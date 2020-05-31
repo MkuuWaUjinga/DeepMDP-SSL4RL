@@ -84,11 +84,7 @@ class DQN(OffPolicyRLAlgorithm):
                          p.requires_grad)
         logger.log(f"Number of parameter of network are: {num_params}")
 
-    def optimize_policy(self, itr, samples):
-        """Optimize q-network."""
-        del itr
-        del samples
-        action_dim = self.env_spec.action_space.n
+    def sample_transitions(self):
         transitions = self.replay_buffer.sample(self.buffer_batch_size)
 
         # Obs. are stored in uint8 format in replay buffer to optimize memory.
@@ -98,7 +94,14 @@ class DQN(OffPolicyRLAlgorithm):
             normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
         # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
         # creation around 10 times faster.
-        transitions = np_to_torch(transitions)
+        return np_to_torch(transitions)
+
+    def optimize_policy(self, itr, samples):
+        """Optimize q-network."""
+        del itr
+        del samples
+        action_dim = self.env_spec.action_space.n
+        transitions = self.sample_transitions()
         observations = transitions['observation'].to(device)
         rewards = transitions['reward'].to(device)
         actions = transitions['action'].to(device)
@@ -134,10 +137,14 @@ class DQN(OffPolicyRLAlgorithm):
 
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
+            new_observations = self.sample_transitions()["observation"]
+            with torch.no_grad():
+                _, new_embedding = self.qf(new_observations, return_embedding=True)
+
             gradient_penalty = 0
-            gradient_penalty += self.compute_gradient_penalty(self.qf.encoder, observations)
+            gradient_penalty += self.compute_gradient_penalty(self.qf.encoder, observations, new_observations)
             for head in [self.qf.head] + [aux.net for aux in self.auxiliary_objectives]:
-                gradient_penalty += self.compute_gradient_penalty(head, embedding)
+                gradient_penalty += self.compute_gradient_penalty(head, embedding, new_embedding)
             loss += self.penalty_lambda * gradient_penalty
 
         loss_func = torch.nn.SmoothL1Loss()
@@ -254,12 +261,11 @@ class DQN(OffPolicyRLAlgorithm):
         self.visualizer = Visualizer(self.experiment_id, self.plot_list)
 
     @staticmethod
-    def compute_gradient_penalty(net, samples):
+    def compute_gradient_penalty(net, samples_a, samples_b):
         """Calculates the gradient penalty loss for WGAN GP, adapt for WGAN-LP
         https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/wgan_gp/wgan_gp.py"""
         # Random weight term for interpolation between real and fake samples
-        batch_size = samples.size(0)
-        samples_a, samples_b = torch.split(samples, int(batch_size / 2))
+        batch_size = samples_a.size(0)
         alpha = torch.rand_like(samples_a)
         # Get random interpolation between real and fake samples
         interpolated_obs = samples_a * alpha + ((1.0 - alpha) * samples_b)
@@ -277,7 +283,7 @@ class DQN(OffPolicyRLAlgorithm):
             create_graph=True
         )[0]
 
-        gradients = gradients.view(int(batch_size / 2), -1)
+        gradients = gradients.view(int(batch_size), -1)
         gradients_norm = gradients.norm(2, dim=1)
         penalty = (gradients_norm ** 2).mean()
         return penalty
