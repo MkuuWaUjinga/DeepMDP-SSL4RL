@@ -137,7 +137,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
-            new_observations = self.sample_transitions()["observation"]
+            new_observations = self.sample_transitions()["observation"].to(device)
             with torch.no_grad():
                 _, new_embedding = self.qf(new_observations, return_embedding=True)
 
