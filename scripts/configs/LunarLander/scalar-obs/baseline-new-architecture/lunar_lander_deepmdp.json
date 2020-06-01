@@ -1,4 +1,6 @@
 {
+    "snapshot_config": {"snapshot_mode": "gap_and_last",
+                       "snapshot_gap": 10},
     "env_name": "LunarLander-v2-stk",
     "dqn_config": {
         "learning_rate": 0.0001,
