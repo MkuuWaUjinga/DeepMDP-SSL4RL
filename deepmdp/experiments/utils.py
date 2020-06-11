@@ -54,10 +54,10 @@ class Visualizer:
 
     def visualize_module(self, head, head_name, num_episodes, num_new_episodes):
         for x, params in enumerate(head.parameters()):
-            l2_norm = params.data.norm(p=2)
-            min = torch.min(params.data)
-            max = torch.max(params.data)
-            mean = torch.mean(params.data)
+            l2_norm = params.data.norm(p=2).numpy()
+            min = torch.min(params.data).numpy()
+            max = torch.max(params.data).numpy()
+            mean = torch.mean(params.data).numpy()
             for i in range(num_new_episodes):
                 self.line_plotter.plot(f"metrics {head_name} {x}", f"L2-norm", f"Weights {head_name} {list(params.shape)}",
                                        num_episodes - num_new_episodes + i, l2_norm)
