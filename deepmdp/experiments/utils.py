@@ -33,6 +33,10 @@ class Visualizer:
         self.count_correlation_matrix = 0
 
     def visualize_episodical_stats(self, algo, num_new_episodes):
+        if self.visualize_aux():
+                self.visualize_aux_losses(num_new_episodes, len(algo.episode_rewards))
+        if self.visualize_latent_space():
+            self.visualize_latent_space_correlation(num_new_episodes)
         if self.visualize_stats():
             for i in range(len(algo.episode_rewards) - num_new_episodes, len(algo.episode_rewards)):
                 self.line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, algo.episode_rewards[i])
@@ -59,11 +63,12 @@ class Visualizer:
         if self.visualize_aux():
             self.aux_losses[loss_type].append(loss)
 
-    def visualize_aux_losses(self, iteration, min_samples=500):
-        if self.aux_losses and all(len(self.aux_losses[aux_loss]) > min_samples for aux_loss in self.aux_losses):
-            self.line_plotter.xlabel = "training iterations"
+    def visualize_aux_losses(self, num_new_episodes, total_num_episode):
+        if self.aux_losses and num_new_episodes > 0:
             for aux_loss in self.aux_losses:
-                self.line_plotter.plot(aux_loss, aux_loss, aux_loss, iteration, np.mean(self.aux_losses[aux_loss]))
+                for i in range(num_new_episodes):
+                    self.line_plotter.plot(aux_loss, aux_loss, aux_loss, total_num_episode - num_new_episodes + i,
+                                           np.mean(self.aux_losses[aux_loss]))
             self.aux_losses = defaultdict(list)
 
     def save_latent_space(self, algo, next_obs, ground_truth_embedding):
@@ -82,14 +87,8 @@ class Visualizer:
             self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
             self.count_correlation_matrix += 1
 
-    def visualize_training_results(self, itr):
-        if self.visualize_aux():
-            self.visualize_aux_losses(itr)
-        if self.visualize_latent_space():
-            self.visualize_latent_space_correlation()
-
-    def visualize_latent_space_correlation(self):
-        if self.correlation_matrix is not None:
+    def visualize_latent_space_correlation(self, num_new_episodes):
+        if self.correlation_matrix is not None and num_new_episodes > 0:
             self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
             assert torch.max(self.correlation_matrix).item() <= 1.0 and torch.min(
                 self.correlation_matrix).item() >= -1.0, "Invalid value for correlation coefficient!"

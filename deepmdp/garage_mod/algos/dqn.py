@@ -193,7 +193,6 @@ class DQN(OffPolicyRLAlgorithm):
                 qf_loss = self.optimize_policy(itr, None)
                 self.episode_qf_losses.append(qf_loss.item())
 
-        self.visualizer.visualize_training_results(self.n_train_steps * itr)
 
         if self._buffer_prefilled:
             if itr % self.target_network_update_freq == 0:
