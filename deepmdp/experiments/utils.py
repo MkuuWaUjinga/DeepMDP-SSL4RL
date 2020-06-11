@@ -33,6 +33,8 @@ class Visualizer:
         self.count_correlation_matrix = 0
 
     def visualize_episodical_stats(self, algo, num_new_episodes):
+        if self.make_weights_plot():
+            self.visualize_weights(algo, num_new_episodes)
         if self.visualize_aux():
             self.visualize_aux_losses(num_new_episodes, len(algo.episode_rewards))
         if self.visualize_latent_space():
@@ -49,6 +51,36 @@ class Visualizer:
                     self.line_plotter.plot("episode reward", "avg reward", "Rewards per episode", i,
                                            np.mean(algo.episode_rewards[i - 100:i]),
                                            color=np.array([[0, 0, 128], ]))
+
+    def visualize_module(self, head, head_name, num_episodes, num_new_episodes):
+        for x, params in enumerate(head.parameters()):
+            l2_norm = params.data.norm(p=2)
+            min = torch.min(params.data)
+            max = torch.max(params.data)
+            mean = torch.mean(params.data)
+            for i in range(num_new_episodes):
+                self.line_plotter.plot(f"metrics {head_name} {x}", f"L2-norm", f"Weights {head_name} {list(params.shape)}",
+                                       num_episodes - num_new_episodes + i, l2_norm)
+                self.line_plotter.plot(f"metrics {head_name} {x}", f"min", f"Weights of {head_name} {list(params.shape)}",
+                                       num_episodes - num_new_episodes + i, min)
+                self.line_plotter.plot(f"metrics {head_name} {x}", f"max", f"Weights of {head_name} {list(params.shape)}",
+                                       num_episodes - num_new_episodes + i, max)
+                self.line_plotter.plot(f"metrics {head_name} {x}", f"mean", f"Weights of {head_name} {list(params.shape)}",
+                                       num_episodes - num_new_episodes + i, mean)
+
+
+    def visualize_weights(self, algo, num_new_episodes):
+        num_episodes = len(algo.episode_rewards)
+        self.line_plotter.env = algo.experiment_id + "_weights"
+        self.visualize_module(algo.qf.head, "Q-head", num_episodes, num_new_episodes)
+        self.visualize_module(algo.qf.encoder, "Encoder", num_episodes, num_new_episodes)
+        for aux in algo.auxiliary_objectives:
+            self.visualize_module(aux.net, aux.__class__.__name__, num_episodes, num_new_episodes)
+        self.line_plotter.env = algo.experiment_id + "_main"
+
+
+    def make_weights_plot(self):
+        return "weight_plot" in self.plot_list
 
     def visualize_aux(self):
         return "aux_loss_plot" in self.plot_list

@@ -73,7 +73,7 @@ class DQN(OffPolicyRLAlgorithm):
         # Init visualizer
         self.experiment_id = experiment_id
         self.plot_list = plot_list
-        self.visualizer = Visualizer(self.experiment_id, self.plot_list)
+        self.visualizer = Visualizer(self.experiment_id + "_main", self.plot_list)
         self.auxiliary_objectives = auxiliary_objectives
 
         params = [self.qf.parameters()] + [aux.net.parameters() for aux in self.auxiliary_objectives]
@@ -257,7 +257,7 @@ class DQN(OffPolicyRLAlgorithm):
     def __setstate__(self, state):
         """Restore state from the unpickled state values."""
         self.__dict__ = state
-        self.visualizer = Visualizer(self.experiment_id, self.plot_list)
+        self.visualizer = Visualizer(self.experiment_id + "_main", self.plot_list)
 
     @staticmethod
     def compute_gradient_penalty(net, samples_a, samples_b):
