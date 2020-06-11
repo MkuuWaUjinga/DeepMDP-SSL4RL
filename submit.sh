@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=deepmdp-repro
-#SBATCH --time=05:00:00
+#SBATCH --time=0
 #SBATCH --cpus-per-task=16
 #SBATCH --partition=gpu
 #SBATCH --nodelist=simba-compute-gpu-3
