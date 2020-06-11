@@ -62,11 +62,11 @@ class Visualizer:
                 self.line_plotter.plot(f"metrics {head_name} {x}", f"L2-norm", f"Weights {head_name} {list(params.shape)}",
                                        num_episodes - num_new_episodes + i, l2_norm)
                 self.line_plotter.plot(f"metrics {head_name} {x}", f"min", f"Weights of {head_name} {list(params.shape)}",
-                                       num_episodes - num_new_episodes + i, min)
+                                       num_episodes - num_new_episodes + i, min, color=np.array([[0, 0, 128], ]))
                 self.line_plotter.plot(f"metrics {head_name} {x}", f"max", f"Weights of {head_name} {list(params.shape)}",
-                                       num_episodes - num_new_episodes + i, max)
+                                       num_episodes - num_new_episodes + i, max, color=np.array([[128, 0, 0], ]))
                 self.line_plotter.plot(f"metrics {head_name} {x}", f"mean", f"Weights of {head_name} {list(params.shape)}",
-                                       num_episodes - num_new_episodes + i, mean)
+                                       num_episodes - num_new_episodes + i, mean, color=np.array([[0, 128, 0], ]))
 
 
     def visualize_weights(self, algo, num_new_episodes):
