@@ -34,7 +34,7 @@ class Visualizer:
 
     def visualize_episodical_stats(self, algo, num_new_episodes):
         if self.visualize_aux():
-                self.visualize_aux_losses(num_new_episodes, len(algo.episode_rewards))
+            self.visualize_aux_losses(num_new_episodes, len(algo.episode_rewards))
         if self.visualize_latent_space():
             self.visualize_latent_space_correlation(num_new_episodes)
         if self.visualize_stats():
@@ -67,8 +67,10 @@ class Visualizer:
         if self.aux_losses and num_new_episodes > 0:
             for aux_loss in self.aux_losses:
                 for i in range(num_new_episodes):
-                    self.line_plotter.plot(aux_loss, aux_loss, aux_loss, total_num_episode - num_new_episodes + i,
-                                           np.mean(self.aux_losses[aux_loss]))
+                    self.line_plotter.plot(aux_loss, "mean", aux_loss, total_num_episode - num_new_episodes + i,
+                                   np.mean(self.aux_losses[aux_loss]))
+                    self.line_plotter.plot(aux_loss, "median", aux_loss, total_num_episode - num_new_episodes + i,
+                                   np.median(self.aux_losses[aux_loss]), color=np.array([[0, 0, 128], ]))
             self.aux_losses = defaultdict(list)
 
     def save_latent_space(self, algo, next_obs, ground_truth_embedding):
