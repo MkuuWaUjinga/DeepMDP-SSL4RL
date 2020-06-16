@@ -15,6 +15,7 @@ def show_agent_playing(policy, env):
             break
         env.render()
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Visualizer:
 
@@ -120,7 +121,7 @@ class Visualizer:
             assert embedding.size() == ground_truth_embedding.size()
             if self.correlation_matrix is None:
                 embedding_dim = embedding.size(1)
-                self.correlation_matrix = torch.zeros((embedding_dim, embedding_dim))
+                self.correlation_matrix = torch.zeros((embedding_dim, embedding_dim)).to(device)
             # Calculate correlation
             self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
             self.count_correlation_matrix += 1
