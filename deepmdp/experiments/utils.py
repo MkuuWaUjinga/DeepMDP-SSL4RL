@@ -42,7 +42,7 @@ class Visualizer:
         if self.visualize_aux():
             self.visualize_aux_losses(num_new_episodes, len(algo.episode_rewards))
         if self.visualize_latent_space():
-            self.visualize_latent_space_correlation(num_new_episodes)
+            self.visualize_latent_space_correlation(num_new_episodes, len(algo.episode_rewards))
         if self.visualize_stats():
             for i in range(len(algo.episode_rewards) - num_new_episodes, len(algo.episode_rewards)):
                 self.line_plotter.plot("episode reward", "rewards", "Rewards per episode", i, algo.episode_rewards[i])
@@ -125,24 +125,30 @@ class Visualizer:
             self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
             self.count_correlation_matrix += 1
 
-    def visualize_latent_space_correlation(self, num_new_episodes):
+    def visualize_latent_space_correlation(self, num_new_episodes, total_num_episodes):
         if self.correlation_matrix is not None and num_new_episodes > 0:
             self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
             assert torch.max(self.correlation_matrix).item() <= 1.0 and torch.min(
                 self.correlation_matrix).item() >= -1.0, "Invalid value for correlation coefficient!"
+            column_names = ["pos_x", "pos_y", "vel_x", "vel_y", "ang", "ang_vel", "leg_1", "leg_2"]
+            row_names = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8']
             self.correlation_plot_window = self.viz.heatmap(X=torch.abs(self.correlation_matrix),
                                                             env=self.env,
                                                             win=self.correlation_plot_window,
                                                             opts=dict(
-                                                                columnnames=["pos_x", "pos_y", "vel_x", "vel_y", "ang",
-                                                                             "ang_vel", "leg_1", "leg_2"],
-                                                                rownames=['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7',
-                                                                          'l8'],
+                                                                columnnames=column_names,
+                                                                rownames= row_names,
                                                                 colormap='Viridis',
                                                                 xmin=0,
                                                                 xmax=1.0,
                                                                 title="Latent space correlation with ground truth state"
                                                             ))
+            for i, column_name in enumerate(column_names):
+                for j, row_name in enumerate(row_names):
+                    for k in range(num_new_episodes):
+                        self.line_plotter.plot(column_name + "_correlation", row_name, column_name,
+                                               total_num_episodes - num_new_episodes + k, self.correlation_matrix[i, j],
+                                               color=np.array([[int((255/8)*j), int((255/8)*(8-j)), 0],]))
             self.correlation_matrix = None
             self.count_correlation_matrix = 0
 
