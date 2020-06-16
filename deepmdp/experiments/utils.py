@@ -148,7 +148,8 @@ class Visualizer:
                 for j, row_name in enumerate(row_names):
                     for k in range(num_new_episodes):
                         self.line_plotter.plot(column_name + "_correlation", row_name, column_name,
-                                               total_num_episodes - num_new_episodes + k, self.correlation_matrix[i, j],
+                                               total_num_episodes - num_new_episodes + k,
+                                               self.correlation_matrix[i, j].cpu().numpy(),
                                                color=np.array([[int((255/8)*j), int((255/8)*(8-j)), 0],]))
             self.correlation_matrix = None
             self.count_correlation_matrix = 0
