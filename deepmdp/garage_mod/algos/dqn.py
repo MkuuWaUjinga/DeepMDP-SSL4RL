@@ -135,7 +135,7 @@ class DQN(OffPolicyRLAlgorithm):
                 loss += transition_loss
                 self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
 
-        self.visualizer.save_latent_space(self, next_observations, transitions.get("ground_truth_state"))
+        self.visualizer.save_latent_space(self, next_observations, transitions.get("ground_truth_state").to(device))
 
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
