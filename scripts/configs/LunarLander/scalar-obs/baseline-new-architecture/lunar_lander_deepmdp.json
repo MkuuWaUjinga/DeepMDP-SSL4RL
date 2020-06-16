@@ -31,6 +31,6 @@
             "use_linear_transition_net": true,
             "primary_embedding_dim_size": 8
         },
-        "plots": ["episodical_stats", "aux_loss_plot", "weight_plot"]
+        "plots": ["episodical_stats", "aux_loss_plot", "weight_plot", "latent_space_correlation_plot"]
     }
 }
