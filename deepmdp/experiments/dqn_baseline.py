@@ -27,6 +27,7 @@ from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLande
 from deepmdp.garage_mod.env_wrappers.obfuscate_velocity_information import ObfuscateVelocityInformation
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
+from deepmdp.experiments.utils import Visualizer
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
 
@@ -131,6 +132,10 @@ def run_task(snapshot_config, env_name, dqn_config):
     # Set seed for action space (needed for epsilon-greedy reproducability)
     env.action_space.seed(get_seed())
 
+    # Init visualizer
+    visualizer = Visualizer(get_info() + "_main", plots)
+    visualizer.publish_config(dqn_config)
+
     runner = LocalRunner(snapshot_config)
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
 
@@ -154,6 +159,7 @@ def run_task(snapshot_config, env_name, dqn_config):
                env_spec=env.spec,
                experiment_id=get_info(),
                plot_list=plots,
+               visualizer=visualizer,
                replay_buffer=replay_buffer,
                qf_optimizer=torch.optim.Adam,
                exploration_strategy=strategy,

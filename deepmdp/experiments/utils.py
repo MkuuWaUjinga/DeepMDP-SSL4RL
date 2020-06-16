@@ -2,7 +2,7 @@ import numpy as np
 from visdom import Visdom
 from collections import defaultdict
 import torch
-
+import pprint
 
 def show_agent_playing(policy, env):
     obs = env.reset()
@@ -31,6 +31,10 @@ class Visualizer:
         self.aux_losses = defaultdict(list)
         self.correlation_matrix = None
         self.count_correlation_matrix = 0
+
+    def publish_config(self, config):
+        config_string = pprint.pformat(dict(config)).replace("\n", "<br>").replace(" ", "&nbsp;")
+        self.viz.text(config_string, env=self.env)
 
     def visualize_episodical_stats(self, algo, num_new_episodes):
         if self.make_weights_plot():

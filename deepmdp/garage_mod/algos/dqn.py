@@ -24,6 +24,7 @@ class DQN(OffPolicyRLAlgorithm):
                  replay_buffer,
                  experiment_id: int,
                  plot_list: List,
+                 visualizer: Visualizer,
                  exploration_strategy=None,
                  n_epoch_cycles=20,
                  min_buffer_size=int(1e4),
@@ -73,7 +74,8 @@ class DQN(OffPolicyRLAlgorithm):
         # Init visualizer
         self.experiment_id = experiment_id
         self.plot_list = plot_list
-        self.visualizer = Visualizer(self.experiment_id + "_main", self.plot_list)
+        self.visualizer = visualizer
+
         self.auxiliary_objectives = auxiliary_objectives
 
         params = [self.qf.parameters()] + [aux.net.parameters() for aux in self.auxiliary_objectives]
