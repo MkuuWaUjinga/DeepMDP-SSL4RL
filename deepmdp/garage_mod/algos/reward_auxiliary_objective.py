@@ -20,7 +20,7 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
         self._output_nonlinearity = output_nonlinearity
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
-        assert "dense_size" in head_config
+        assert "dense_sizes" in head_config
 
         action_dim = self._env_spec.action_space.flat_dim
 
