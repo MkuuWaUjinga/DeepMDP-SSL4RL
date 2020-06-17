@@ -45,5 +45,6 @@ class LunarLanderToImageObservations(gym.Wrapper):
 
     def step(self, action):
         """gym.Env step function."""
-        _, reward, done, info = self.env.step(action)
+        obs, reward, done, info = self.env.step(action)
+        info["ground_truth_state"] = obs
         return self.render_image(), reward, done, info
