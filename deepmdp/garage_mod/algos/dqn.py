@@ -270,6 +270,8 @@ class DQN(OffPolicyRLAlgorithm):
         alpha = torch.rand_like(samples_a)
         # Get random interpolation between real and fake samples
         interpolated_obs = samples_a * alpha + ((1.0 - alpha) * samples_b)
+        if len(interpolated_obs.size()) == 4:
+            interpolated_obs = interpolated_obs.permute(0, 3, 2, 1)
         interpolated_obs = torch.autograd.Variable(interpolated_obs, requires_grad=True)
 
         d_interpolates = net(interpolated_obs)
