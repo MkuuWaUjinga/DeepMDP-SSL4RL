@@ -69,6 +69,7 @@ class DiscreteCNNQFunction(nn.Module):
         self._head_config = head
         self._env_spec = env_spec
         self._action_dim = env_spec.action_space.n
+        self._cnn_hidden_nonlinearity = hidden_nonlinearity
         self._hidden_nonlinearity = hidden_nonlinearity
         self._hidden_w_init = hidden_w_init
         self._hidden_b_init = hidden_b_init
@@ -84,13 +85,30 @@ class DiscreteCNNQFunction(nn.Module):
 
         # Init Encoder
         self._input_shape = self._encoder_config["input_shape"]
-        if "filter_dims" in encoder:
+        if "filter_dims" in self._encoder_config:
             self._filter_dims = tuple(self._encoder_config["filter_dims"])
             self._num_filters = tuple(self._encoder_config["num_filters"])
             self._strides = tuple(self._encoder_config["strides"])
             self.encoder = nn.Sequential(*list(self.cnn_module_generator()))
-            self.embedding_size = self._get_conv_output(self._input_shape)
-        elif "dense_sizes" in encoder:
+            output_dim_conv = self._get_conv_output(self._input_shape)
+            if "dense_sizes" in self._encoder_config:
+                self.embedding_size = self._encoder_config["dense_sizes"][-1]
+                fc_module = MLPModule(input_dim=output_dim_conv,
+                                      output_dim=self.embedding_size,
+                                      hidden_sizes=list(self._encoder_config["dense_sizes"][:-1]),
+                                      hidden_nonlinearity=self._hidden_nonlinearity,
+                                      hidden_w_init=self._hidden_w_init,
+                                      hidden_b_init=self._hidden_b_init,
+                                      output_nonlinearity=self._output_nonlinearity,
+                                      output_w_init=self._output_w_init,
+                                      output_b_init=self._output_b_init,
+                                      layer_normalization=self._layer_norm,
+                                      output_normalization=self._layer_norm)
+                self.encoder.add_module("flatten", nn.Flatten())
+                self.encoder.add_module("fc", fc_module)
+            else:
+                self.embedding_size = output_dim_conv
+        elif "dense_sizes" in self._encoder_config:
             self.embedding_size = self._encoder_config["dense_sizes"][-1]
             self.encoder = MLPModule(
                 input_dim=self._input_shape[0],
