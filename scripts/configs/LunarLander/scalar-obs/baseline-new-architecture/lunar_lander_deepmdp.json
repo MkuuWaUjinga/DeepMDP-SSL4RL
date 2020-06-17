@@ -28,8 +28,14 @@
         },
         "deepmdp": {
             "use": true,
-            "use_linear_transition_net": true,
-            "primary_embedding_dim_size": 8
+            "transition_head": {
+                "dense_sizes": [
+                    512
+                ]
+            },
+            "reward_head": {
+                "dense_sizes": []
+            }
         },
         "plots": ["episodical_stats", "aux_loss_plot", "weight_plot", "latent_space_correlation_plot"]
     }
