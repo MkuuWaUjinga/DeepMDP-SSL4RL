@@ -145,11 +145,8 @@ def run_task(snapshot_config, env_name, dqn_config):
 
     aux_objectives = []
     if deepmdp_config["use"]:
-        reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size)
-        use_linear = deepmdp_config["use_linear_transition_net"]
-        transition_objective = TransitionAuxiliaryObjective(env.spec,
-                                                            deepmdp_config["primary_embedding_dim_size"],
-                                                            use_linear_transition_net=use_linear)
+        reward_objective = RewardAuxiliaryObjective(env.spec, qf.embedding_size, deepmdp_config["reward_head"])
+        transition_objective = TransitionAuxiliaryObjective(env.spec, qf.embedding_size, deepmdp_config["transition_head"])
         aux_objectives.append(reward_objective)
         aux_objectives.append(transition_objective)
 

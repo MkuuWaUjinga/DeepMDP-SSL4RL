@@ -10,15 +10,16 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
     def __init__(self,
                  env_spec,
                  input_dim,
-                 use_linear_transition_net=False,
+                 head_config,
                  nonlinearity=torch.nn.ReLU,
                  w_init=torch.nn.init.xavier_normal_,
                  b_init=torch.nn.init.zeros_):
 
+        self.head_config = head_config
         self._env_spec = env_spec
         self.input_dim = input_dim
         self.action_dim = self._env_spec.action_space.flat_dim
-        if not use_linear_transition_net:
+        if "filter_dims" in self.head_config:
             conv = torch.nn.Conv2d(
                     in_channels=self.input_dim,
                     out_channels=self.input_dim * self.action_dim,
@@ -29,10 +30,10 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
             b_init(conv.bias)
             zero_pad = torch.nn.ZeroPad2d((0, 1, 0, 1)) # maintain input dimensionality.
             self.net = torch.nn.Sequential(zero_pad, conv, nonlinearity())
-        else:
+        elif "dense_sizes" in self.head_config:
             self.net = MLPModule(input_dim=self.input_dim,
                                  output_dim=self.input_dim * self.action_dim,
-                                 hidden_sizes=[512],
+                                 hidden_sizes=self.head_config["dense_sizes"],
                                  hidden_nonlinearity=torch.nn.ReLU,
                                  hidden_w_init=w_init,
                                  hidden_b_init=b_init,

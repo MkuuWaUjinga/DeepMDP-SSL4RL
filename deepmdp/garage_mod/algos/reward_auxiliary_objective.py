@@ -10,21 +10,24 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
     def __init__(self,
                  env_spec,
                  embedding_dim,
+                 head_config,
                  output_nonlinearity=None,
                  output_w_init=torch.nn.init.xavier_normal_,
                  output_b_init=torch.nn.init.zeros_):
 
         self._env_spec = env_spec
+        self._head_config = head_config
         self._output_nonlinearity = output_nonlinearity
         self._output_w_init = output_w_init
         self._output_b_init = output_b_init
+        assert "dense_size" in head_config
 
         action_dim = self._env_spec.action_space.flat_dim
 
         self.net = MLPModule(
             input_dim=embedding_dim,
             output_dim=action_dim,
-            hidden_sizes=[],
+            hidden_sizes=self._head_config["dense_sizes"],
             output_nonlinearity=self._output_nonlinearity,
             output_w_init=self._output_w_init,
             output_b_init=self._output_b_init
