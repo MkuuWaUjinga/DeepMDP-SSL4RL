@@ -150,7 +150,7 @@ class Visualizer:
                     for k in range(num_new_episodes):
                         self.line_plotter.plot(column_name + "_correlation", row_name, column_name,
                                                total_num_episodes - num_new_episodes + k,
-                                               self.correlation_matrix[i, j].cpu().numpy(),
+                                               self.correlation_matrix[j, i].cpu().numpy(),
                                                color=np.array([[int((255/8)*j), int((255/8)*(8-j)), 0],]))
             self.line_plotter.env = experiment_id + "_main"
             self.correlation_matrix = None
