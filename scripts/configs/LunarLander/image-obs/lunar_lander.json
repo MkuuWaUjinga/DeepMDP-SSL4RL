@@ -57,7 +57,7 @@
             "latent_space_correlation_plot"
         ],
         "deepmdp": {
-            "use": true,
+            "use": false,
             "transition_head": {
                 "dense_sizes": [
                     512
