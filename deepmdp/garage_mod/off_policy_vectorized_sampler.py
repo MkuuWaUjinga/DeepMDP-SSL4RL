@@ -29,7 +29,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
 
     """
 
-    def __init__(self, algo, env, n_envs=None, no_reset=True):
+    def __init__(self, algo, env, n_envs=None, no_reset=True, num_frames=None):
         if n_envs is None:
             n_envs = int(algo.rollout_batch_size)
         super().__init__(algo, env)
@@ -43,6 +43,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
         self._last_success_count = [0] * n_envs
         self.env_spec = self.env.spec
         self.vec_env = None
+        self.num_frames = num_frames
 
     def start_worker(self):
         """Initialize the sampler."""
@@ -104,6 +105,9 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     obs_normalized)
 
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions)
+            for (i, done) in enumerate(dones):
+                if done:
+                    env_infos["ground_truth_state"][i] = next_obses[i][self.num_frames - 1::self.num_frames]
             #self.vec_env.envs[0].render()
             self._last_obses = next_obses
             env_infos = tensor_utils.split_tensor_dict_list(env_infos)
@@ -137,6 +141,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     "next_observation": next_obses
                 }
                 if env_infos and env_infos[0].get("ground_truth_state") is not None:
+                    assert all(next_obses[0][3::4] == env_infos[0].get("ground_truth_state")) == True
                     payload["ground_truth_state"] = [env_info.get("ground_truth_state") for env_info in env_infos]
                 self.algo.replay_buffer.add_transitions(
                     **payload

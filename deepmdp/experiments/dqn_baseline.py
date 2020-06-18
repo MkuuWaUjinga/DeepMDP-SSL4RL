@@ -30,6 +30,7 @@ from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAu
 from deepmdp.experiments.utils import Visualizer
 
 ex = sacred.experiment.Experiment("DQN-Baseline")
+num_frames = 4
 
 @ex.capture
 def get_info(_run):
@@ -72,7 +73,7 @@ def setup_atari_env(env_name):
     env = Grayscale(env)
     env = Resize(env, 84, 84)
     env = ClipReward(env)
-    env = StackFrames(env, 4)
+    env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
 def setup_lunar_lander_with_image_obs(env_name):
@@ -80,7 +81,7 @@ def setup_lunar_lander_with_image_obs(env_name):
     env = LunarLanderToImageObservations(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
-    env = StackFrames(env, 4)
+    env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
 def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames=4):
@@ -94,7 +95,7 @@ def setup_stacked_lunar_lander_env(env_name):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = ObfuscateVelocityInformation(env, no_obf=True)
-    env = StackFrames(env, 4)
+    env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
 def run_task(snapshot_config, env_name, dqn_config):
@@ -170,9 +171,7 @@ def run_task(snapshot_config, env_name, dqn_config):
                auxiliary_objectives=aux_objectives)
 
     # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
-    algo.sampler_cls = OffPolicyVectorizedSampler
-
-    runner.setup(algo=algo, env=env)
+    runner.setup(algo=algo, env=env, sampler_cls=OffPolicyVectorizedSampler, sampler_args={"num_frames": num_frames})
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
     # Bypass GarageEnv>>close as this requires a display
