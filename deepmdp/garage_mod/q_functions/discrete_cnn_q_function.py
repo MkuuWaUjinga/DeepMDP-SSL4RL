@@ -109,20 +109,24 @@ class DiscreteCNNQFunction(nn.Module):
             else:
                 self.embedding_size = output_dim_conv
         elif "dense_sizes" in self._encoder_config:
-            self.embedding_size = self._encoder_config["dense_sizes"][-1]
-            self.encoder = MLPModule(
-                input_dim=self._input_shape[0],
-                output_dim=self.embedding_size,
-                hidden_sizes=list(self._encoder_config["dense_sizes"][:-1]),
-                hidden_nonlinearity=self._hidden_nonlinearity,
-                hidden_w_init=self._hidden_w_init,
-                hidden_b_init=self._hidden_b_init,
-                output_nonlinearity=self._output_nonlinearity,
-                output_w_init=self._output_w_init,
-                output_b_init=self._output_b_init,
-                layer_normalization=self._layer_norm,
-                output_normalization=self._layer_norm
-            )
+            if self._encoder_config["dense_sizes"]:
+                self.embedding_size = self._encoder_config["dense_sizes"][-1]
+                self.encoder = MLPModule(
+                    input_dim=self._input_shape[0],
+                    output_dim=self.embedding_size,
+                    hidden_sizes=list(self._encoder_config["dense_sizes"][:-1]),
+                    hidden_nonlinearity=self._hidden_nonlinearity,
+                    hidden_w_init=self._hidden_w_init,
+                    hidden_b_init=self._hidden_b_init,
+                    output_nonlinearity=self._output_nonlinearity,
+                    output_w_init=self._output_w_init,
+                    output_b_init=self._output_b_init,
+                    layer_normalization=self._layer_norm,
+                    output_normalization=self._layer_norm
+                )
+            else:
+                self.embedding_size = self._input_shape[0]
+                self.encoder = nn.Sequential()
 
         # Init Mlp
         self.head = MLPModule(input_dim=self.embedding_size,
