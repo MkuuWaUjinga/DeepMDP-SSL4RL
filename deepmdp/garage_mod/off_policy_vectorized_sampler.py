@@ -105,14 +105,12 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     obs_normalized)
 
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions)
+            new_episode_obs = None
             if "reset_new_obs" in env_infos:
+                new_episode_obs = next_obses.copy()
                 for i, reset_new_obs in env_infos["reset_new_obs"][0]:
-                    copy_next_obses = next_obses.copy()
-                    copy_next_obses[i] = reset_new_obs
-                self._last_obses = copy_next_obses
+                    new_episode_obs[i] = reset_new_obs
                 del env_infos["reset_new_obs"]
-            else:
-                self._last_obses = next_obses
 
             #self.vec_env.envs[0].render()
 
@@ -206,5 +204,9 @@ class OffPolicyVectorizedSampler(BatchSampler):
 
                     if self.algo.es:
                         self.algo.es.reset()
-
+            if new_episode_obs:
+                obses = new_episode_obs
+            else:
+                obses = next_obses
+            self._last_obses = obses
         return paths
