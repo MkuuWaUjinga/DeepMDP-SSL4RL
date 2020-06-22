@@ -38,7 +38,7 @@ def get_info(_run):
 
 @ex.config
 def config():
-    snapshot_config = {"snapshot_dir": (os.path.join(os.getcwd(), 'runs/snapshots')),
+    snapshot_config = {"snapshot_dir": (os.path.join(os.getcwd(), f'runs/{get_info()}/snapshots')),
                        "snapshot_mode": "last",
                        "snapshot_gap": 1}
     env_name = "SpaceInvaders-v0"
@@ -171,7 +171,7 @@ def run_task(snapshot_config, env_name, dqn_config):
                auxiliary_objectives=aux_objectives)
 
     # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
-    runner.setup(algo=algo, env=env, sampler_cls=OffPolicyVectorizedSampler, sampler_args={"num_frames": num_frames})
+    runner.setup(algo=algo, env=env, sampler_cls=OffPolicyVectorizedSampler)
     runner.train(n_epochs=n_epochs, batch_size=sampler_batch_size)
 
     # Bypass GarageEnv>>close as this requires a display

@@ -31,7 +31,9 @@ class Visualizer:
         self.correlation_plot_window = None
         self.aux_losses = defaultdict(list)
         self.correlation_matrix = None
-        self.count_correlation_matrix = 0
+        self.num_calls = 0
+        self.store_every_th = 10
+        self.count_correlation_matrix = 0 # Can be calculated from num_calls and store_every_th
 
     def publish_config(self, config):
         config_string = pprint.pformat(dict(config)).replace("\n", "<br>").replace(" ", "&nbsp;")
@@ -111,7 +113,7 @@ class Visualizer:
             self.aux_losses = defaultdict(list)
 
     def save_latent_space(self, algo, next_obs, ground_truth_embedding):
-        if self.visualize_latent_space():
+        if self.visualize_latent_space() and self.num_calls % self.store_every_th == 0:
             if ground_truth_embedding is None:
                 raise ValueError("Ground truth embedding mustn't be of None type")
             algo.qf.eval()
@@ -125,12 +127,13 @@ class Visualizer:
             # Calculate correlation
             self.correlation_matrix += self.calculate_correlation(embedding.t(), ground_truth_embedding.t())
             self.count_correlation_matrix += 1
+        self.num_calls += 1
 
     def visualize_latent_space_correlation(self, num_new_episodes, total_num_episodes, experiment_id):
         if self.correlation_matrix is not None and num_new_episodes > 0:
             self.correlation_matrix = self.correlation_matrix.div(self.count_correlation_matrix)
-            assert torch.max(self.correlation_matrix).item() <= 1.0 and torch.min(
-                self.correlation_matrix).item() >= -1.0, "Invalid value for correlation coefficient!"
+            assert round(torch.max(self.correlation_matrix).item(), 2) <= 1.0 and round(torch.min(
+                self.correlation_matrix).item(), 2) >= -1.0, "Invalid value for correlation coefficient!"
             self.line_plotter.env = experiment_id + "_latent_space"
             column_names = ["pos_x", "pos_y", "vel_x", "vel_y", "ang", "ang_vel", "leg_1", "leg_2"]
             row_names = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8']
@@ -143,7 +146,7 @@ class Visualizer:
                                                                 colormap='Viridis',
                                                                 xmin=0,
                                                                 xmax=1.0,
-                                                                title="Latent space correlation with ground truth state"
+                                                                title="Average latent space correlation per batch and episode"
                                                             ))
             for i, column_name in enumerate(column_names):
                 for j, row_name in enumerate(row_names):
@@ -180,8 +183,8 @@ class Visualizer:
             c = c.div(std_x1)
             c = c.div(std_x2.t())
 
-            assert torch.max(c).item() <= 1.0 and torch.min(
-                c).item() >= -1.0, "Invalid value for correlation coefficient!"
+            assert round(torch.max(c).item(), 2) <= 1.0 and round(torch.min(
+                c).item(), 2) >= -1.0, "Invalid value for correlation coefficient!"
             return c
 
 

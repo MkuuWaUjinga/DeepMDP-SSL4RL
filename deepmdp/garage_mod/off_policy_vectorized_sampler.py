@@ -12,10 +12,11 @@ import pickle
 
 import numpy as np
 
+from deepmdp.garage_mod.vec_env_executor import VecEnvExecutor
+
 from garage.experiment import deterministic
 from garage.misc import tensor_utils
 from garage.sampler.batch_sampler import BatchSampler
-from garage.sampler.vec_env_executor import VecEnvExecutor
 
 
 class OffPolicyVectorizedSampler(BatchSampler):
@@ -29,7 +30,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
 
     """
 
-    def __init__(self, algo, env, n_envs=None, no_reset=True, num_frames=None):
+    def __init__(self, algo, env, n_envs=None, no_reset=True):
         if n_envs is None:
             n_envs = int(algo.rollout_batch_size)
         super().__init__(algo, env)
@@ -43,7 +44,6 @@ class OffPolicyVectorizedSampler(BatchSampler):
         self._last_success_count = [0] * n_envs
         self.env_spec = self.env.spec
         self.vec_env = None
-        self.num_frames = num_frames
 
     def start_worker(self):
         """Initialize the sampler."""
@@ -105,11 +105,17 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     obs_normalized)
 
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions)
-            for (i, done) in enumerate(dones):
-                if done:
-                    env_infos["ground_truth_state"][i] = next_obses[i][self.num_frames - 1::self.num_frames]
+            if "reset_new_obs" in env_infos:
+                for i, reset_new_obs in env_infos["reset_new_obs"][0]:
+                    copy_next_obses = next_obses.copy()
+                    copy_next_obses[i] = reset_new_obs
+                self._last_obses = copy_next_obses
+                del env_infos["reset_new_obs"]
+            else:
+                self._last_obses = next_obses
+
             #self.vec_env.envs[0].render()
-            self._last_obses = next_obses
+
             env_infos = tensor_utils.split_tensor_dict_list(env_infos)
             n_samples += len(next_obses)
 
@@ -141,8 +147,8 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     "next_observation": next_obses
                 }
                 if env_infos and env_infos[0].get("ground_truth_state") is not None:
-                    assert all(next_obses[0][3::4] == env_infos[0].get("ground_truth_state")) == True
                     payload["ground_truth_state"] = [env_info.get("ground_truth_state") for env_info in env_infos]
+
                 self.algo.replay_buffer.add_transitions(
                     **payload
                 )
@@ -200,5 +206,5 @@ class OffPolicyVectorizedSampler(BatchSampler):
 
                     if self.algo.es:
                         self.algo.es.reset()
-            obses = next_obses
+
         return paths
