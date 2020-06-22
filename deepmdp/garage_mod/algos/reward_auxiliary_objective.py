@@ -38,7 +38,6 @@ class RewardAuxiliaryObjective(AuxiliaryObjective):
 
 
     def compute_loss(self, embedding, rewards, actions):
-        assert list(actions.size()) == [32, 4]
         preds = self.net(embedding)
         selected_predicted_rewards = torch.sum(preds * actions, axis = 1)
         loss_func = torch.nn.SmoothL1Loss()
