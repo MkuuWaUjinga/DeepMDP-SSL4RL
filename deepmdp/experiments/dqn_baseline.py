@@ -36,31 +36,6 @@ num_frames = 4
 def get_info(_run):
     return(_run._id)
 
-@ex.config
-def config():
-    snapshot_config = {"snapshot_dir": (os.path.join(os.getcwd(), f'runs/{get_info()}/snapshots')),
-                       "snapshot_mode": "last",
-                       "snapshot_gap": 1}
-    env_name = "SpaceInvaders-v0"
-    dqn_config = {
-        "replay_buffer_size": int(1e3),
-        "n_epochs": 100,
-        "steps_per_epoch": 20,
-        "sampler_batch_size": 500,
-        "n_train_steps": 500,
-        "learning_rate": 0.0002,
-        "buffer_batch_size": 32,
-        "target_network_update_freq": 5,
-        "min_buffer_size": 100,
-        "epsilon_greedy": {
-            "max_epsilon": 1.0,
-            "min_epsilon": 0.1,
-            "decay_ratio": 0.1,
-            "exponential_decay_rate": None, # Do linear decay with above params
-            "episodical_decay": False
-        }
-    }
-
 
 def setup_atari_env(env_name):
     env = gym.make(env_name)
@@ -98,22 +73,26 @@ def setup_stacked_lunar_lander_env(env_name):
     env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
-def run_task(snapshot_config, env_name, dqn_config):
-    logger.log(f"Config of this experiment is {dqn_config}")
-    replay_buffer_size = dqn_config.get("replay_buffer_size")
-    n_epochs = dqn_config.get("n_epochs")
-    steps_per_epoch = dqn_config.get("steps_per_epoch")
-    sampler_batch_size = dqn_config.get("sampler_batch_size")
-    n_train_steps = dqn_config.get("n_train_steps")
-    learning_rate = dqn_config.get("learning_rate")
-    buffer_batch_size = dqn_config.get("buffer_batch_size")
-    target_network_update_freq = dqn_config.get("target_network_update_freq")
-    min_buffer_size = dqn_config.get("min_buffer_size")
-    net_config = dqn_config.get("net")
-    deepmdp_config = dqn_config.get("deepmdp")
-    epsilon_greedy_config = dqn_config.get("epsilon_greedy")
-    plots = dqn_config.get("plots")
+def run_task(snapshot_config, exp_config):
+    logger.log(f"Config of this experiment is {exp_config}")
+    env_name = exp_config["env_name"]
+    replay_buffer_size = exp_config.get("replay_buffer_size")
+    n_epochs = exp_config.get("n_epochs")
+    steps_per_epoch = exp_config.get("steps_per_epoch")
+    sampler_batch_size = exp_config.get("sampler_batch_size")
+    n_train_steps = exp_config.get("n_train_steps")
+    learning_rate = exp_config.get("learning_rate")
+    buffer_batch_size = exp_config.get("buffer_batch_size")
+    target_network_update_freq = exp_config.get("target_network_update_freq")
+    min_buffer_size = exp_config.get("min_buffer_size")
+    net_config = exp_config.get("q-net")
+    deepmdp_config = exp_config.get("deepmdp")
+    epsilon_greedy_config = exp_config.get("epsilon_greedy")
+    plots = exp_config.get("plots")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
+    snapshot_config = SnapshotConfig(os.path.join(os.getcwd(), f'runs/{get_info()}/snapshots'),
+                                     snapshot_config["snapshot_mode"],
+                                     snapshot_config["snapshot_gap"])
 
     if "LunarLander-v2" in env_name:
         # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
@@ -126,7 +105,7 @@ def run_task(snapshot_config, env_name, dqn_config):
         else:
             env = GarageEnv(gym.make(env_name))
     else:
-        env = setup_atari_env(env_name)
+        raise ValueError("Env name not known")
 
     # Set env seed
     env.seed(get_seed())
@@ -135,7 +114,7 @@ def run_task(snapshot_config, env_name, dqn_config):
 
     # Init visualizer
     visualizer = Visualizer(get_info() + "_main", plots)
-    visualizer.publish_config(dqn_config)
+    visualizer.publish_config(exp_config)
 
     runner = LocalRunner(snapshot_config)
     replay_buffer = SimpleReplayBuffer(env.spec, size_in_transitions=replay_buffer_size, time_horizon=1)
@@ -178,8 +157,6 @@ def run_task(snapshot_config, env_name, dqn_config):
     env.env.close()
 
 @ex.main
-def run(snapshot_config, env_name, dqn_config):
-    snapshot_config = SnapshotConfig(snapshot_config["snapshot_dir"],
-                                     snapshot_config["snapshot_mode"],
-                                     snapshot_config["snapshot_gap"])
-    run_task(snapshot_config, env_name, dqn_config)
+def run(snapshot_config, exp_config):
+
+    run_task(snapshot_config, exp_config)

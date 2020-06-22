@@ -1,21 +1,21 @@
 {
     "snapshot_config": {"snapshot_mode": "gap_and_last",
                        "snapshot_gap": 10},
-    "env_name": "LunarLander-v2-stk",
-    "dqn_config": {
+    "exp_config": {
+        "env_name": "LunarLander-v2-stk",
         "learning_rate": 0.0001,
         "replay_buffer_size": 400000,
         "buffer_batch_size": 32,
         "n_train_steps": 1,
-        "n_epochs": 1,
-        "sampler_batch_size": 1,
-        "steps_per_epoch": 2000000,
+        "n_epochs": 20,
+        "sampler_batch_size": 2,
+        "steps_per_epoch": 100000,
         "min_buffer_size": 64,
         "target_network_update_freq": 10,
-        "net": {
+        "q-net": {
             "encoder":{
                 "input_shape": [32],
-                "dense_sizes": [128, 8]
+                "dense_sizes": [128, 128, 8]
             },
             "head": {
                 "dense_sizes": [256, 128]
@@ -30,11 +30,12 @@
             "use": true,
             "transition_head": {
                 "dense_sizes": [
-                    512
-                ]
+                    128
+                ],
+                "layer_norm": false
             },
             "reward_head": {
-                "dense_sizes": []
+                "dense_sizes": [128]
             }
         },
         "plots": ["episodical_stats", "aux_loss_plot", "weight_plot", "latent_space_correlation_plot"]
