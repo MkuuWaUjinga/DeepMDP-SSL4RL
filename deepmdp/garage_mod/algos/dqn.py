@@ -39,6 +39,7 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  input_include_goal=False,
                  smooth_return=True,
+                 normalize_input = False,
                  auxiliary_objectives: List[AuxiliaryObjective] = None,
                  penalty_lambda=0.01
                  ):
@@ -64,6 +65,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_qf_losses: List = []
         self.episode_std_q_vals: List = []
         self.penalty_lambda = penalty_lambda
+        self.normalize_input = normalize_input
 
         # Clone target q-network
         self.target_qf = self.qf.clone()
@@ -86,6 +88,14 @@ class DQN(OffPolicyRLAlgorithm):
                          p.requires_grad)
         logger.log(f"Number of parameter of network are: {num_params}")
 
+    @staticmethod
+    def min_max_norm(x, min, max):
+        """
+        Normalize array to [0, 1] range
+        """
+        x = np.clip(x, min, max) # Just a safeguard
+        return (x - min) / (max - min)
+
     def sample_transitions(self):
         transitions = self.replay_buffer.sample(self.buffer_batch_size)
 
@@ -94,6 +104,13 @@ class DQN(OffPolicyRLAlgorithm):
         transitions["observation"] = np.array(normalize_pixel_batch(self.env_spec, transitions["observation"]))
         transitions["next_observation"] = np.array(
             normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
+        if self.normalize_input:
+            if len(transitions["observation"].shape) == 2:
+                transitions["observation"] = self.min_max_norm(transitions["observation"], -8, 8)
+                transitions["next_observation"] = self.min_max_norm(transitions["next_observation"], -8, 8)
+
+            transitions["reward"] = self.min_max_norm(transitions["reward"], -100, 100)
+
         # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
         # creation around 10 times faster.
         return np_to_torch(transitions)
@@ -124,16 +141,16 @@ class DQN(OffPolicyRLAlgorithm):
         q_selected = torch.sum(qval * actions_one_hot, axis=1)
 
         loss = 0
+        reward_loss = 0
+        transition_loss = 0
         for auxiliary_objective in self.auxiliary_objectives:
             if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
                 flattened_embedding = embedding.view(embedding.size(0), -1)
                 reward_loss = auxiliary_objective.compute_loss(flattened_embedding, rewards, actions_one_hot)
-                loss += reward_loss
                 self.visualizer.save_aux_loss(reward_loss.item(), "reward loss")
             elif isinstance(auxiliary_objective, TransitionAuxiliaryObjective):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
                 transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
-                loss += transition_loss
                 self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
 
         self.visualizer.save_latent_space(self, next_observations, ground_truth_state)
@@ -152,7 +169,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
-        loss += qval_loss
+        loss += reward_loss + transition_loss + 10 * qval_loss
         self.qf_optimizer.zero_grad()
         loss.backward()
         self.qf_optimizer.step()

@@ -75,8 +75,10 @@ def setup_stacked_lunar_lander_env(env_name):
 
 def run_task(snapshot_config, exp_config):
     logger.log(f"Config of this experiment is {exp_config}")
-    env_name = exp_config["env_name"]
+    env_config = exp_config["env"]
+    env_name = env_config["name"]
     replay_buffer_size = exp_config.get("replay_buffer_size")
+    normalize_input = exp_config.get("normalize_input")
     n_epochs = exp_config.get("n_epochs")
     steps_per_epoch = exp_config.get("steps_per_epoch")
     sampler_batch_size = exp_config.get("sampler_batch_size")
@@ -132,6 +134,7 @@ def run_task(snapshot_config, exp_config):
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,
+               normalize_input=normalize_input,
                qf=qf,
                env_spec=env.spec,
                experiment_id=get_info(),
