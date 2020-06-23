@@ -1,0 +1,66 @@
+{
+    "snapshot_config":{"snapshot_mode": "gap_and_last",
+                       "snapshot_gap": 10},
+    "exp_config": {
+        "env": {
+            "name": "LunarLander-v2-obf",
+            "normalize": false
+        },
+        "learning_rate": 0.0001,
+        "loss_weights": {
+            "q_loss": 10,
+            "r_loss": 1,
+            "t_loss": 1
+        },
+        "replay_buffer_size": 400000,
+        "buffer_batch_size": 32,
+        "n_train_steps": 1,
+        "n_epochs": 20,
+        "sampler_batch_size": 1,
+        "steps_per_epoch": 100000,
+        "min_buffer_size": 64,
+        "target_network_update_freq": 10,
+        "q-net": {
+            "encoder": {
+                "input_shape": [
+                    32
+                ],
+                "dense_sizes": [
+                    128,
+                    128,
+                    8
+                ]
+            },
+            "head": {
+                "dense_sizes": [
+                    256,
+                    128
+                ]
+            },
+            "layer_norm": false
+        },
+        "epsilon_greedy": {
+            "exponential_decay_rate": 0.995,
+            "episodical_decay": true
+        },
+        "deepmdp": {
+            "use": true,
+            "transition_head": {
+                "dense_sizes": [
+                    128
+                ],
+                "layer_norm": false
+            },
+            "reward_head": {
+                "dense_sizes": [],
+                "layer_norm": false
+            }
+        },
+        "plots": [
+            "episodical_stats",
+            "aux_loss_plot",
+            "weight_plot",
+            "latent_space_correlation_plot"
+        ]
+    }
+}
