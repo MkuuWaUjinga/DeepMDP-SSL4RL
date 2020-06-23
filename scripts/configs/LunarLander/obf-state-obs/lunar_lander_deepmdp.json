@@ -23,7 +23,7 @@
         "q-net": {
             "encoder": {
                 "input_shape": [
-                    32
+                    20
                 ],
                 "dense_sizes": [
                     128,
