@@ -1,7 +1,7 @@
 import torch
 from dowel import logger
 from deepmdp.garage_mod.algos.auxiliary_objective import AuxiliaryObjective
-from garage.torch.modules.mlp_module import MLPModule
+from deepmdp.garage_mod.modules.mlp_module import MLPModule
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -39,7 +39,8 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
                                  hidden_b_init=b_init,
                                  output_nonlinearity=None,
                                  output_w_init=w_init,
-                                 output_b_init=b_init)
+                                 output_b_init=b_init,
+                                 layer_normalization=self.head_config["layer_norm"])
         self.net.to(device)
 
         logger.log(f"Transition net: {self.net}")
@@ -56,7 +57,7 @@ class TransitionAuxiliaryObjective(AuxiliaryObjective):
         batch_size = actions.size(0)
         # Reshape tensor: B x act * channels ... --> B x channels x ... x act
         preds = preds.unsqueeze(len(preds.size())).reshape(batch_size, self.input_dim, *preds.size()[2:4], self.action_dim)
-        loss_func = torch.nn.MSELoss()
+        loss_func = torch.nn.SmoothL1Loss()
         loss = 0
         for i, act in enumerate(actions):
             predicted__next_observation_embedding = preds[i, ..., int(act.item())].squeeze()

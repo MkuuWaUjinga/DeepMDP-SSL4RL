@@ -39,9 +39,9 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  input_include_goal=False,
                  smooth_return=True,
-                 normalize_input = False,
                  auxiliary_objectives: List[AuxiliaryObjective] = None,
-                 penalty_lambda=0.01
+                 penalty_lambda=0.01,
+                 loss_weights: dict = None
                  ):
         super(DQN, self).__init__(env_spec=env_spec,
                                   policy=policy,
@@ -65,7 +65,11 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_qf_losses: List = []
         self.episode_std_q_vals: List = []
         self.penalty_lambda = penalty_lambda
-        self.normalize_input = normalize_input
+        if loss_weights is None:
+            loss_weights = {'q_loss': 1, 'r_loss': 1, 't_loss': 1}
+        self.weight_q_loss = loss_weights["q_loss"]
+        self.weight_t_loss = loss_weights["t_loss"]
+        self.weight_r_loss = loss_weights["r_loss"]
 
         # Clone target q-network
         self.target_qf = self.qf.clone()
@@ -104,12 +108,6 @@ class DQN(OffPolicyRLAlgorithm):
         transitions["observation"] = np.array(normalize_pixel_batch(self.env_spec, transitions["observation"]))
         transitions["next_observation"] = np.array(
             normalize_pixel_batch(self.env_spec, transitions["next_observation"]))
-        if self.normalize_input:
-            if len(transitions["observation"].shape) == 2:
-                transitions["observation"] = self.min_max_norm(transitions["observation"], -8, 8)
-                transitions["next_observation"] = self.min_max_norm(transitions["next_observation"], -8, 8)
-
-            transitions["reward"] = self.min_max_norm(transitions["reward"], -100, 100)
 
         # Garage's normalize pixel batch returns list primitive. Converting it to numpy array makes FloatTensor
         # creation around 10 times faster.
@@ -169,7 +167,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         loss_func = torch.nn.SmoothL1Loss()
         qval_loss = loss_func(q_selected, target)
-        loss += reward_loss + transition_loss + 10 * qval_loss
+        loss += self.weight_r_loss * reward_loss + self.weight_t_loss * transition_loss + self.weight_q_loss * qval_loss
         self.qf_optimizer.zero_grad()
         loss.backward()
         self.qf_optimizer.step()
@@ -205,7 +203,7 @@ class DQN(OffPolicyRLAlgorithm):
                     self.es._decay(episode_done=True)
                     path_length = paths["path_lengths"]
                     logger.log(
-                        f"Episode: {len(self.episode_rewards)} --- Episode length: {path_length} --- Epsilon: {self.es._epsilon}")
+                        f"Episode: {len(self.episode_rewards)} -- Episode length: {path_length} -- Reward: {self.episode_rewards[-1]} -- Epsilon: {self.es._epsilon}")
 
         last_average_return = np.mean(self.episode_rewards) if self.episode_rewards else 0
         for _ in range(self.n_train_steps):
