@@ -24,6 +24,7 @@ from deepmdp.garage_mod.local_runner import LocalRunner
 from deepmdp.garage_mod.algos.dqn import DQN
 from deepmdp.garage_mod.algos.reward_auxiliary_objective import RewardAuxiliaryObjective
 from deepmdp.garage_mod.env_wrappers.lunar_lander_to_image_obs import LunarLanderToImageObservations
+from deepmdp.garage_mod.env_wrappers.min_max_norm_lunar import MinMaxNormLunar
 from deepmdp.garage_mod.env_wrappers.obfuscate_velocity_information import ObfuscateVelocityInformation
 from deepmdp.garage_mod.q_functions.discrete_cnn_q_function import DiscreteCNNQFunction
 from deepmdp.garage_mod.algos.transition_auxiliary_objective import TransitionAuxiliaryObjective
@@ -66,10 +67,12 @@ def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames
     env = StackFrames(env, number_of_stacked_frames)
     return GarageEnv(env)
 
-def setup_stacked_lunar_lander_env(env_name):
+def setup_stacked_lunar_lander_env(env_name, normalize=False):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = ObfuscateVelocityInformation(env, no_obf=True)
+    if normalize:
+        env = MinMaxNormLunar(env)
     env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
@@ -78,7 +81,6 @@ def run_task(snapshot_config, exp_config):
     env_config = exp_config["env"]
     env_name = env_config["name"]
     replay_buffer_size = exp_config.get("replay_buffer_size")
-    normalize_input = exp_config.get("normalize_input")
     n_epochs = exp_config.get("n_epochs")
     steps_per_epoch = exp_config.get("steps_per_epoch")
     sampler_batch_size = exp_config.get("sampler_batch_size")
@@ -103,7 +105,7 @@ def run_task(snapshot_config, exp_config):
         elif env_name[-4:] == "-obf":
             env = setup_lunar_lander_with_obfuscated_states(env_name[:-4])
         elif env_name[-4:] == "-stk":
-            env = setup_stacked_lunar_lander_env(env_name[:-4])
+            env = setup_stacked_lunar_lander_env(env_name[:-4], normalize=env_config["normalize"])
         else:
             env = GarageEnv(gym.make(env_name))
     else:
@@ -134,7 +136,6 @@ def run_task(snapshot_config, exp_config):
 
     policy = DiscreteQfDerivedPolicy(env.spec, qf)
     algo = DQN(policy=policy,
-               normalize_input=normalize_input,
                qf=qf,
                env_spec=env.spec,
                experiment_id=get_info(),
