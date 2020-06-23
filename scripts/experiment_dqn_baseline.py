@@ -2,8 +2,11 @@ import dowel
 import click
 from deepmdp.experiments.dqn_baseline import ex
 from sacred.observers import FileStorageObserver
+from sacred import settings
 from garage.experiment import deterministic
 from dowel import logger
+
+settings.SETTINGS.CONFIG.READ_ONLY_CONFIG = False
 
 @click.command()
 @click.option('--config_path', help='Path for experiment\'s config')
