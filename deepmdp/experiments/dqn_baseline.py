@@ -90,6 +90,7 @@ def run_task(snapshot_config, exp_config):
     target_network_update_freq = exp_config.get("target_network_update_freq")
     min_buffer_size = exp_config.get("min_buffer_size")
     net_config = exp_config.get("q-net")
+    loss_weights = exp_config.get("loss_weights")
     deepmdp_config = exp_config.get("deepmdp")
     epsilon_greedy_config = exp_config.get("epsilon_greedy")
     plots = exp_config.get("plots")
@@ -151,7 +152,8 @@ def run_task(snapshot_config, exp_config):
                target_network_update_freq=target_network_update_freq,
                qf_lr=learning_rate,
                max_path_length=1000,
-               auxiliary_objectives=aux_objectives)
+               auxiliary_objectives=aux_objectives,
+               loss_weights=loss_weights)
 
     # Use modded off policy sampler for passing generating summary statistics about episode's qvals in algo-object.
     runner.setup(algo=algo, env=env, sampler_cls=OffPolicyVectorizedSampler)
