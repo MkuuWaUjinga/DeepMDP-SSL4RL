@@ -36,7 +36,7 @@
         },
         "deepmdp": {
             "use": false
-            }
         },
-        "plots": ["episodical_stats", "aux_loss_plot", "weight_plot", "latent_space_correlation_plot"]
+        "plots": ["episodical_stats", "weight_plot", "latent_space_correlation_plot"]
+    }
 }
