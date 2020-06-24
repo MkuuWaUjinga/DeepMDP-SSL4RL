@@ -1,5 +1,5 @@
 {
-     "snapshot_config": {"snapshot_mode": "gap_and_last",
+    "snapshot_config": {"snapshot_mode": "gap_and_last",
                        "snapshot_gap": 10},
     "exp_config": {
         "env": {
@@ -39,5 +39,4 @@
             }
         },
         "plots": ["episodical_stats", "aux_loss_plot", "weight_plot", "latent_space_correlation_plot"]
-    }
 }
