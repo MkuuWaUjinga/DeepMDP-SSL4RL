@@ -196,6 +196,12 @@ class DQN(OffPolicyRLAlgorithm):
 
         self.visualizer.visualize_episodical_stats(self, len(paths["undiscounted_returns"]))
 
+        for i, complete in enumerate(paths["complete"]):
+            if complete:
+                path_length = paths["path_lengths"][i]
+                logger.log(
+                        f"Episode: {len(self.episode_rewards)} -- Episode length: {path_length} -- Reward: {self.episode_rewards[-1]} -- Epsilon: {self.es._epsilon}")
+
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
             for complete in paths["complete"]:
