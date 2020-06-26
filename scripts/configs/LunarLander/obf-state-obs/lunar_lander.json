@@ -4,7 +4,8 @@
   "exp_config": {
         "env": {
             "name": "LunarLander-v2-obf",
-            "normalize": false
+            "normalize": false,
+            "do_noops": true
         },
         "learning_rate": 0.0001,
         "loss_weights": {

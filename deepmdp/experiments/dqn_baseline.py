@@ -52,19 +52,20 @@ def setup_atari_env(env_name):
     env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
-def setup_lunar_lander_with_image_obs(env_name):
+def setup_lunar_lander_with_image_obs(env_name, do_noops=False):
+    from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = LunarLanderToImageObservations(env)
     env = Grayscale(env)
     env = Resize(env, 84, 84)
-    env = StackFrames(env, num_frames)
+    env = StackFrames(env, num_frames, do_noops=do_noops)
     return GarageEnv(env)
 
-def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames=4):
+def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames=4, do_noops=False):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = ObfuscateVelocityInformation(env)
-    env = StackFrames(env, number_of_stacked_frames)
+    env = StackFrames(env, number_of_stacked_frames, do_noops=do_noops)
     return GarageEnv(env)
 
 def setup_stacked_lunar_lander_env(env_name, normalize=False):
@@ -102,9 +103,9 @@ def run_task(snapshot_config, exp_config):
     if "LunarLander-v2" in env_name:
         # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
         if env_name[-4:] == "-img":
-            env = setup_lunar_lander_with_image_obs(env_name[:-4])
+            env = setup_lunar_lander_with_image_obs(env_name[:-4], env_config["do_noops"])
         elif env_name[-4:] == "-obf":
-            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4])
+            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4], env_config["do_noops"])
         elif env_name[-4:] == "-stk":
             env = setup_stacked_lunar_lander_env(env_name[:-4], normalize=env_config["normalize"])
         else:
