@@ -116,6 +116,7 @@ class Visualizer:
         if self.visualize_latent_space() and self.num_calls % self.store_every_th == 0:
             if ground_truth_embedding is None:
                 raise ValueError("Ground truth embedding mustn't be of None type")
+            ground_truth_embedding = ground_truth_embedding.to(device)
             algo.qf.eval()
             with torch.no_grad():
                 _, embedding = algo.qf(next_obs, return_embedding=True)
@@ -137,7 +138,7 @@ class Visualizer:
             self.line_plotter.env = experiment_id + "_latent_space"
             column_names = ["pos_x", "pos_y", "vel_x", "vel_y", "ang", "ang_vel", "leg_1", "leg_2"]
             row_names = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8']
-            self.correlation_plot_window = self.viz.heatmap(X=torch.abs(self.correlation_matrix),
+            self.correlation_plot_window = self.viz.heatmap(X=self.correlation_matrix,
                                                             env=self.env,
                                                             win=self.correlation_plot_window,
                                                             opts=dict(
