@@ -103,9 +103,9 @@ def run_task(snapshot_config, exp_config):
     if "LunarLander-v2" in env_name:
         # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
         if env_name[-4:] == "-img":
-            env = setup_lunar_lander_with_image_obs(env_name[:-4], env_config["do_noops"])
+            env = setup_lunar_lander_with_image_obs(env_name[:-4], do_noops=env_config["do_noops"])
         elif env_name[-4:] == "-obf":
-            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4], env_config["do_noops"])
+            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4], do_noops=env_config["do_noops"])
         elif env_name[-4:] == "-stk":
             env = setup_stacked_lunar_lander_env(env_name[:-4], normalize=env_config["normalize"])
         else:
