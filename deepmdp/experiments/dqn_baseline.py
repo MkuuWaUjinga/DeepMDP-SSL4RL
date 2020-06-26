@@ -110,6 +110,8 @@ def run_task(snapshot_config, exp_config):
             env = setup_stacked_lunar_lander_env(env_name[:-4], normalize=env_config["normalize"])
         else:
             env = GarageEnv(gym.make(env_name))
+    elif "SpaceInvaders-v0" == env_name:
+        env = setup_atari_env(env_name)
     else:
         raise ValueError("Env name not known")
 
