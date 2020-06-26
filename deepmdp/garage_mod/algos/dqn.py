@@ -124,7 +124,6 @@ class DQN(OffPolicyRLAlgorithm):
         actions = transitions['action'].to(device)
         next_observations = transitions['next_observation'].to(device)
         dones = transitions['terminal'].to(device)
-        ground_truth_state = transitions.get('ground_truth_state').to(device)
 
         with torch.no_grad():
             target_qvals = self.target_qf(next_observations)
@@ -151,7 +150,7 @@ class DQN(OffPolicyRLAlgorithm):
                 transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
                 self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
 
-        self.visualizer.save_latent_space(self, next_observations, ground_truth_state)
+        self.visualizer.save_latent_space(self, next_observations, transitions.get('ground_truth_state'))
 
         # compute gradient penalty if we have auxiliary objectives i.e. we train a DeepMDP
         if self.auxiliary_objectives:
@@ -199,8 +198,11 @@ class DQN(OffPolicyRLAlgorithm):
         for i, complete in enumerate(paths["complete"]):
             if complete:
                 path_length = paths["path_lengths"][i]
+                reward = paths["undiscounted_returns"][i]
+                num_new_episodes = len(paths["path_lengths"])
                 logger.log(
-                        f"Episode: {len(self.episode_rewards)} -- Episode length: {path_length} -- Reward: {self.episode_rewards[-1]} -- Epsilon: {self.es._epsilon}")
+                        f"Episode: {len(self.episode_rewards) - num_new_episodes + i} -- Episode length: {path_length} -- Reward: {reward}")
+        logger.log(f"Epsilon after sampling: {self.es._epsilon}")
 
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
