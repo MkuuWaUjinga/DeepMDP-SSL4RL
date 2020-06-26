@@ -195,14 +195,7 @@ class DQN(OffPolicyRLAlgorithm):
 
         self.visualizer.visualize_episodical_stats(self, len(paths["undiscounted_returns"]))
 
-        for i, complete in enumerate(paths["complete"]):
-            if complete:
-                path_length = paths["path_lengths"][i]
-                reward = paths["undiscounted_returns"][i]
-                num_new_episodes = len(paths["path_lengths"])
-                logger.log(
-                        f"Episode: {len(self.episode_rewards) - num_new_episodes + i} -- Episode length: {path_length} -- Reward: {reward}")
-        logger.log(f"Epsilon after sampling: {self.es._epsilon}")
+
 
         # Decay epsilon of exploration strategy manually for each finished episode.
         if self.es._episodical_decay:
@@ -212,6 +205,15 @@ class DQN(OffPolicyRLAlgorithm):
                     path_length = paths["path_lengths"]
                     logger.log(
                         f"Episode: {len(self.episode_rewards)} -- Episode length: {path_length} -- Reward: {self.episode_rewards[-1]} -- Epsilon: {self.es._epsilon}")
+        else:
+            for i, complete in enumerate(paths["complete"]):
+                if complete:
+                    path_length = paths["path_lengths"][i]
+                    reward = paths["undiscounted_returns"][i]
+                    num_new_episodes = len(paths["path_lengths"])
+                    logger.log(
+                            f"Episode: {len(self.episode_rewards) - num_new_episodes + i} -- Episode length: {path_length} -- Reward: {reward}")
+            logger.log(f"Epsilon after sampling: {self.es._epsilon}")
 
         last_average_return = np.mean(self.episode_rewards) if self.episode_rewards else 0
         for _ in range(self.n_train_steps):
