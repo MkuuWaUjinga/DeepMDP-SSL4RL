@@ -145,7 +145,7 @@ class Visualizer:
                                                                 columnnames=column_names,
                                                                 rownames= row_names,
                                                                 colormap='Viridis',
-                                                                xmin=0,
+                                                                xmin=-1.0,
                                                                 xmax=1.0,
                                                                 title="Average latent space correlation per batch and episode"
                                                             ))
