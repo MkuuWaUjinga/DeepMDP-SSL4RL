@@ -13,12 +13,12 @@
             "t_loss": 1
         },
         "replay_buffer_size": 400000,
-        "buffer_batch_size": 64,
+        "buffer_batch_size": 128,
         "n_train_steps": 1,
         "n_epochs": 20,
         "sampler_batch_size": 32,
         "steps_per_epoch": 100000,
-        "min_buffer_size": 128,
+        "min_buffer_size": 256,
         "target_network_update_freq": 10,
         "q-net": {
             "encoder": {
@@ -37,7 +37,7 @@
                     128
                 ]
             },
-            "layer_norm": false
+            "layer_norm": "batch"
         },
         "epsilon_greedy": {
             "exponential_decay_rate": 0.995,
@@ -49,17 +49,16 @@
                 "dense_sizes": [
                     128
                 ],
-                "layer_norm": false
+                "layer_norm": "batch"
             },
             "reward_head": {
                 "dense_sizes": [],
-                "layer_norm": false
+                "layer_norm": "layer"
             }
         },
         "plots": [
             "episodical_stats",
             "aux_loss_plot",
-            "weight_plot",
             "latent_space_correlation_plot"
         ]
     }

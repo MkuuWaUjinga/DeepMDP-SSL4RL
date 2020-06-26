@@ -16,7 +16,7 @@
         "replay_buffer_size": 400000,
         "buffer_batch_size": 32,
         "n_train_steps": 1,
-        "n_epochs": 20,
+        "n_epochs": 40,
         "sampler_batch_size": 1,
         "steps_per_epoch": 100000,
         "min_buffer_size": 64,
@@ -31,10 +31,11 @@
             "head": {
                 "dense_sizes": [
                     256,
+                    128,
                     128
                 ]
             },
-            "layer_norm": false
+            "layer_norm": "batch"
         },
         "epsilon_greedy": {
             "exponential_decay_rate": 0.995,
