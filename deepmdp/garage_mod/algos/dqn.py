@@ -40,7 +40,6 @@ class DQN(OffPolicyRLAlgorithm):
                  input_include_goal=False,
                  smooth_return=True,
                  auxiliary_objectives: List[AuxiliaryObjective] = None,
-                 penalty_lambda=0.01,
                  loss_weights: dict = None
                  ):
         super(DQN, self).__init__(env_spec=env_spec,
@@ -64,12 +63,12 @@ class DQN(OffPolicyRLAlgorithm):
         self.episode_mean_q_vals: List = []
         self.episode_qf_losses: List = []
         self.episode_std_q_vals: List = []
-        self.penalty_lambda = penalty_lambda
         if loss_weights is None:
-            loss_weights = {'q_loss': 1, 'r_loss': 1, 't_loss': 1}
+            loss_weights = {'q_loss': 1, 'r_loss': 1, 't_loss': 1, 'penalty_lambda': 0.01}
         self.weight_q_loss = loss_weights["q_loss"]
         self.weight_t_loss = loss_weights["t_loss"]
         self.weight_r_loss = loss_weights["r_loss"]
+        self.penalty_lambda = loss_weights["penalty_lambda"]
 
         # Clone target q-network
         self.target_qf = self.qf.clone()
