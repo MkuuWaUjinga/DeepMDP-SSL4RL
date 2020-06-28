@@ -9,9 +9,7 @@
         },
         "learning_rate": 0.0001,
         "loss_weights": {
-            "q_loss": 10,
-            "r_loss": 1,
-            "t_loss": 1
+            "q_loss": 10
         },
         "replay_buffer_size": 400000,
         "buffer_batch_size": 32,

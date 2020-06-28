@@ -4,21 +4,23 @@
     "exp_config": {
         "env": {
             "name": "LunarLander-v2-obf",
-            "normalize": false
+            "normalize": false,
+            "do_noops": true
         },
         "learning_rate": 0.0001,
         "loss_weights": {
             "q_loss": 10,
-            "r_loss": 1,
-            "t_loss": 1
+            "r_loss": 0,
+            "t_loss": 0,
+            "penalty_lambda": 0
         },
         "replay_buffer_size": 400000,
-        "buffer_batch_size": 128,
+        "buffer_batch_size": 32,
         "n_train_steps": 1,
         "n_epochs": 20,
-        "sampler_batch_size": 32,
+        "sampler_batch_size": 1,
         "steps_per_epoch": 100000,
-        "min_buffer_size": 256,
+        "min_buffer_size": 64,
         "target_network_update_freq": 10,
         "q-net": {
             "encoder": {
