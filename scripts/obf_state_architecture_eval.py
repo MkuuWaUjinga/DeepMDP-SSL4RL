@@ -81,7 +81,7 @@ def train(model):
             with torch.no_grad():
                 preds = model(x)
                 if evaluate_only_obf_states:
-                    avg_val_loss += loss_func(preds[[2, 3, 5]], y[[2, 3, 5]])
+                    avg_val_loss += loss_func(preds[:, [2, 3, 5]], y[:, [2, 3, 5]])
                 else:
                     avg_val_loss += loss_func(preds, y)
         print('Epoch {} | Val Loss {}'.format(epoch_number, avg_val_loss/len(val_data_loader)))
