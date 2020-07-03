@@ -113,21 +113,7 @@ fc_regressor = MLPModule(
     layer_normalization=False,
     output_normalization=False
 )
-#train(fc_regressor)
-
-### Validaiton loss only calculaed on obfuscated states
-#Epoch 8 | Val Loss 0.02061530016362667
-#Epoch 9 | Batch 0/9375 | Train Loss 0.003650262486189604
-#Epoch 9 | Batch 1000/9375 | Train Loss 0.0057346816174685955
-#Epoch 9 | Batch 2000/9375 | Train Loss 0.006480484269559383
-#Epoch 9 | Batch 3000/9375 | Train Loss 0.006486681755632162
-#Epoch 9 | Batch 4000/9375 | Train Loss 0.006742620840668678
-#Epoch 9 | Batch 5000/9375 | Train Loss 0.006722504273056984
-#Epoch 9 | Batch 6000/9375 | Train Loss 0.006714096758514643
-#Epoch 9 | Batch 7000/9375 | Train Loss 0.006624280009418726
-#Epoch 9 | Batch 8000/9375 | Train Loss 0.006707015912979841
-#Epoch 9 | Batch 9000/9375 | Train Loss 0.006717470474541187
-#Epoch 9 | Val Loss 0.01983780227601528
+print("Num params fc layer {}".format(sum(par.numel() for par in fc_regressor.parameters() if par.requires_grad)))
 
 conv_regressor = torch.nn.Sequential(
     torch.nn.Conv1d(
@@ -148,7 +134,25 @@ conv_regressor = torch.nn.Sequential(
     torch.nn.Flatten(),
     torch.nn.Linear(32 * num_unobf_states, 8)
 )
-train(conv_regressor, reshape=True)
+print("Num params fc layer {}".format(sum(par.numel() for par in conv_regressor.parameters() if par.requires_grad)))
+
+#train(fc_regressor)
+
+### Validaiton loss only calculaed on obfuscated states
+#Epoch 8 | Val Loss 0.02061530016362667
+#Epoch 9 | Batch 0/9375 | Train Loss 0.003650262486189604
+#Epoch 9 | Batch 1000/9375 | Train Loss 0.0057346816174685955
+#Epoch 9 | Batch 2000/9375 | Train Loss 0.006480484269559383
+#Epoch 9 | Batch 3000/9375 | Train Loss 0.006486681755632162
+#Epoch 9 | Batch 4000/9375 | Train Loss 0.006742620840668678
+#Epoch 9 | Batch 5000/9375 | Train Loss 0.006722504273056984
+#Epoch 9 | Batch 6000/9375 | Train Loss 0.006714096758514643
+#Epoch 9 | Batch 7000/9375 | Train Loss 0.006624280009418726
+#Epoch 9 | Batch 8000/9375 | Train Loss 0.006707015912979841
+#Epoch 9 | Batch 9000/9375 | Train Loss 0.006717470474541187
+#Epoch 9 | Val Loss 0.01983780227601528
+
+#train(conv_regressor, reshape=True)
 
 ### Validation loss only calculaed on obfuscated states
 #Epoch 8 | Val Loss 0.02006567269563675
