@@ -103,7 +103,7 @@ np.random.seed(32)
 fc_regressor = MLPModule(
     input_dim=num_stacked_obs * num_unobf_states,
     output_dim=8,
-    hidden_sizes=[128, 128],
+    hidden_sizes=[64],
     hidden_nonlinearity=torch.nn.ReLU,
     hidden_w_init=torch.nn.init.xavier_normal_,
     hidden_b_init=torch.nn.init.zeros_,
@@ -134,23 +134,23 @@ conv_regressor = torch.nn.Sequential(
     torch.nn.Flatten(),
     torch.nn.Linear(32 * num_unobf_states, 8)
 )
-print("Num params fc layer {}".format(sum(par.numel() for par in conv_regressor.parameters() if par.requires_grad)))
+print("Num params conv layer {}".format(sum(par.numel() for par in conv_regressor.parameters() if par.requires_grad)))
 
-#train(fc_regressor)
+train(fc_regressor)
 
-### Validaiton loss only calculaed on obfuscated states
-#Epoch 8 | Val Loss 0.02061530016362667
-#Epoch 9 | Batch 0/9375 | Train Loss 0.003650262486189604
-#Epoch 9 | Batch 1000/9375 | Train Loss 0.0057346816174685955
-#Epoch 9 | Batch 2000/9375 | Train Loss 0.006480484269559383
-#Epoch 9 | Batch 3000/9375 | Train Loss 0.006486681755632162
-#Epoch 9 | Batch 4000/9375 | Train Loss 0.006742620840668678
-#Epoch 9 | Batch 5000/9375 | Train Loss 0.006722504273056984
-#Epoch 9 | Batch 6000/9375 | Train Loss 0.006714096758514643
-#Epoch 9 | Batch 7000/9375 | Train Loss 0.006624280009418726
-#Epoch 9 | Batch 8000/9375 | Train Loss 0.006707015912979841
-#Epoch 9 | Batch 9000/9375 | Train Loss 0.006717470474541187
-#Epoch 9 | Val Loss 0.01983780227601528
+### Validation loss only calculaed on obfuscated states
+#Epoch 8 | Val Loss 0.014309137128293514
+#Epoch 9 | Batch 0/9375 | Train Loss 0.003871660679578781
+#Epoch 9 | Batch 1000/9375 | Train Loss 0.012485149316489697
+#Epoch 9 | Batch 2000/9375 | Train Loss 0.012422861531376839
+#Epoch 9 | Batch 3000/9375 | Train Loss 0.01215127483010292
+#Epoch 9 | Batch 4000/9375 | Train Loss 0.012166060507297516
+#Epoch 9 | Batch 5000/9375 | Train Loss 0.01232787687331438
+#Epoch 9 | Batch 6000/9375 | Train Loss 0.012387661263346672
+#Epoch 9 | Batch 7000/9375 | Train Loss 0.012286301702260971
+#Epoch 9 | Batch 8000/9375 | Train Loss 0.012248095124959946
+#Epoch 9 | Batch 9000/9375 | Train Loss 0.012354159727692604
+#Epoch 9 | Val Loss 0.013362232595682144
 
 #train(conv_regressor, reshape=True)
 
