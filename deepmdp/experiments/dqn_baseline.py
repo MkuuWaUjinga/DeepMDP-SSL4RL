@@ -38,7 +38,7 @@ def get_info(_run):
     return(_run._id)
 
 
-def setup_atari_env(env_name):
+def setup_atari_env(env_name, num_frames):
     env = gym.make(env_name)
     env = Noop(env, noop_max=30)
     env = MaxAndSkip(env, skip=4)
@@ -52,7 +52,7 @@ def setup_atari_env(env_name):
     env = StackFrames(env, num_frames)
     return GarageEnv(env)
 
-def setup_lunar_lander_with_image_obs(env_name, do_noops=False):
+def setup_lunar_lander_with_image_obs(env_name, num_frames, do_noops=False):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = LunarLanderToImageObservations(env)
@@ -61,14 +61,14 @@ def setup_lunar_lander_with_image_obs(env_name, do_noops=False):
     env = StackFrames(env, num_frames, do_noops=do_noops)
     return GarageEnv(env)
 
-def setup_lunar_lander_with_obfuscated_states(env_name, number_of_stacked_frames=4, do_noops=False):
+def setup_lunar_lander_with_obfuscated_states(env_name, num_frames, do_noops=False):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = ObfuscateVelocityInformation(env)
-    env = StackFrames(env, number_of_stacked_frames, do_noops=do_noops)
+    env = StackFrames(env, num_frames, do_noops=do_noops)
     return GarageEnv(env)
 
-def setup_stacked_lunar_lander_env(env_name, normalize=False):
+def setup_stacked_lunar_lander_env(env_name, num_frames, normalize=False):
     from deepmdp.garage_mod.env_wrappers.stack_frames import StackFrames
     env = gym.make(env_name)
     env = ObfuscateVelocityInformation(env, no_obf=True)
@@ -96,6 +96,9 @@ def run_task(snapshot_config, exp_config):
     epsilon_greedy_config = exp_config.get("epsilon_greedy")
     plots = exp_config.get("plots")
     steps = n_epochs * steps_per_epoch * sampler_batch_size
+    num_frames = env_config.get("num_frames")
+    if num_frames is None:
+        num_frames = 4
     snapshot_config = SnapshotConfig(os.path.join(os.getcwd(), f'runs/{get_info()}/snapshots'),
                                      snapshot_config["snapshot_mode"],
                                      snapshot_config["snapshot_gap"])
@@ -103,15 +106,15 @@ def run_task(snapshot_config, exp_config):
     if "LunarLander-v2" in env_name:
         # Pass either LunarLander-v2 or LunarLander-v2-img to have the env give back image or semantical observations.
         if env_name[-4:] == "-img":
-            env = setup_lunar_lander_with_image_obs(env_name[:-4], do_noops=env_config["do_noops"])
+            env = setup_lunar_lander_with_image_obs(env_name[:-4], num_frames, do_noops=env_config["do_noops"])
         elif env_name[-4:] == "-obf":
-            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4], do_noops=env_config["do_noops"])
+            env = setup_lunar_lander_with_obfuscated_states(env_name[:-4], num_frames, do_noops=env_config["do_noops"])
         elif env_name[-4:] == "-stk":
-            env = setup_stacked_lunar_lander_env(env_name[:-4], normalize=env_config["normalize"])
+            env = setup_stacked_lunar_lander_env(env_name[:-4], num_frames, normalize=env_config["normalize"])
         else:
             env = GarageEnv(gym.make(env_name))
     elif "SpaceInvaders-v0" == env_name:
-        env = setup_atari_env(env_name)
+        env = setup_atari_env(env_name, num_frames)
     else:
         raise ValueError("Env name not known")
 
