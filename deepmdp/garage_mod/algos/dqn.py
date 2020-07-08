@@ -145,11 +145,11 @@ class DQN(OffPolicyRLAlgorithm):
             if isinstance(auxiliary_objective, RewardAuxiliaryObjective):
                 flattened_embedding = embedding.view(embedding.size(0), -1)
                 reward_loss = auxiliary_objective.compute_loss(flattened_embedding, rewards, actions_one_hot)
-                self.visualizer.save_aux_loss(reward_loss.item(), "reward loss")
+                self.visualizer.save_aux_loss(self.weight_r_loss * reward_loss.item(), "reward loss")
             elif isinstance(auxiliary_objective, TransitionAuxiliaryObjective):
                 _, embedding_next_obs = self.qf(next_observations, return_embedding=True)
                 transition_loss = auxiliary_objective.compute_loss(embedding, embedding_next_obs, actions)
-                self.visualizer.save_aux_loss(transition_loss.item(), "transition loss")
+                self.visualizer.save_aux_loss(self.weight_t_loss * transition_loss.item(), "transition loss")
 
         self.visualizer.save_latent_space(self, next_observations, transitions.get('ground_truth_state'))
 
