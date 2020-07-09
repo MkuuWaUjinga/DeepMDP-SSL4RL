@@ -64,7 +64,7 @@ class DiscreteCNNQFunction(nn.Module):
                  output_nonlinearity=None,
                  output_w_init=torch.nn.init.xavier_normal_,
                  output_b_init=torch.nn.init.zeros_,
-                 layer_norm=True):
+                 layer_norm=False):
         self._encoder_config = encoder
         self._head_config = head
         self._env_spec = env_spec
@@ -103,7 +103,7 @@ class DiscreteCNNQFunction(nn.Module):
                                       output_w_init=self._output_w_init,
                                       output_b_init=self._output_b_init,
                                       layer_normalization=self._layer_norm,
-                                      output_normalization=self._layer_norm)
+                                      output_normalization=True)
                 self.encoder.add_module("flatten", nn.Flatten())
                 self.encoder.add_module("fc", fc_module)
             else:
@@ -178,6 +178,10 @@ class DiscreteCNNQFunction(nn.Module):
                 stride=stride,
                 padding=filter_dim // 2  # Maintain spatial resolution if stride 1
             )
+            if self._layer_norm == "batch":
+                yield nn.BatchNorm2d(input_dim)
+            elif self._layer_norm == "layer":
+                yield nn.LayerNorm(input_dim)
             self._hidden_w_init(conv_layer.weight)
             self._hidden_b_init(conv_layer.bias)
             yield conv_layer
