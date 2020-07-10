@@ -5,6 +5,7 @@ from deepmdp.experiments.dqn_baseline import setup_stacked_lunar_lander_env
 import numpy as np
 from gym.utils.play import play
 from visdom import Visdom
+from deepmdp.experiments.utils import VisdomLinePlotter
 import matplotlib;
 
 matplotlib.use('TkAgg')
@@ -95,16 +96,16 @@ def project_back(vector):
     reshaped_normalized = vector.reshape(8, 4).transpose() * (tiled_99th_quantile - tiled_1th_quantile) + tiled_1th_quantile
     return reshaped_normalized.transpose().flatten()
 
-def latent_space_eval(obs, model_name, perturbed_index):
+def latent_space_eval(obs, model_name, perturbed_index, viz):
     with open(f"configs/LunarLander/scalar-obs/baseline-new-architecture/{model_name}.pkl", "rb") as file:
         exp = pickle.load(file)
     algo = exp['algo']
     q_net = algo.qf
     q_net.eval()
-    viz = Visdom(port=9098)
     num_perturbations = 100
     l1_obs_list = []
     l1_embedding_list = []
+    obs[perturbed_index*num_stacked_frames:(perturbed_index+1)*num_stacked_frames] = quantiles[perturbed_index][1]
 
     # Just for testing
     normalized_obs = normalize(obs)
@@ -131,9 +132,17 @@ def latent_space_eval(obs, model_name, perturbed_index):
         l1_embedding_list.append(l1_embedding_delta.item())
 
     x = np.stack((np.array(l1_obs_list), np.array(l1_embedding_list)), axis=1)
-    viz.scatter(
-        X=x
-    )
+    x = x[x[:, 0].argsort()]
+    for i in range(len(x)):
+        viz.plot("l1 in embedding space", str(perturbed_index), "Latent Space Exp", x[i, 0], x[i, 1], color=np.array([[(int(255/6))*perturbed_index, (int(255/6))*(6-perturbed_index), 0], ]))
+    #viz.line(
+    #    X=x[:, 0],
+    #    Y=x[:, 1],
+    #    opts=dict(
+    #        legend=list(range(6)),
+    #       linecolor=np.array([[(int(255/6))*perturbed_index, (int(255/6))*(6-perturbed_index), 0], ])
+    #    )
+    #)
 
 
 def determine_min_max(env, index):
@@ -164,10 +173,13 @@ if __name__ == "__main__":
     model_name_vanilla = "vanilla_dqn_baseline_latent"
 
     # play_env(env, lunar_lander_key_map)
+
+    viz = Visdom(port=9098)
+    plotter = VisdomLinePlotter(viz, xlabel="l1 in observation space")
     obs = env.reset()
     for _ in range(4):
         obs, _, _, _ = env.step(0)
 
     for i in range(6):
-        latent_space_eval(obs, model_name_deepmdp, i)
+        latent_space_eval(obs, model_name_deepmdp, i, plotter)
 
