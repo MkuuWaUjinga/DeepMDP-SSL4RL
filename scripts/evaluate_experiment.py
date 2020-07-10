@@ -114,12 +114,12 @@ def latent_space_eval(obs, model_name, perturbed_index, viz):
 
     with torch.no_grad():
         _, embedding = q_net(torch.Tensor(obs).unsqueeze(0), return_embedding=True)
-
+#
     for j in range(num_perturbations):
         # perturb all occurences of attribute of index perturbed_index [-1, 1]
         normalized_obs = normalize(obs)
         perturbed_obs = np.copy(normalized_obs)
-        perturbed_obs[perturbed_index*num_stacked_frames:(perturbed_index+1) * num_stacked_frames] = j / num_perturbations # TODO try out only perturbing the latest obs of attribute
+        perturbed_obs[perturbed_index*num_stacked_frames+3] = j/num_perturbations # Only perturb lates argument
         obs_delta = normalized_obs - perturbed_obs
 
         back_projected_perturbed_obs = project_back(perturbed_obs)
@@ -179,7 +179,8 @@ if __name__ == "__main__":
     obs = env.reset()
     for _ in range(4):
         obs, _, _, _ = env.step(0)
+        env.render()
 
     for i in range(6):
-        latent_space_eval(obs, model_name_deepmdp, i, plotter)
+        latent_space_eval(obs, model_name_vanilla, i, plotter)
 
