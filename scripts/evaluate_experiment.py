@@ -213,19 +213,18 @@ if __name__ == "__main__":
     # play_env(env, lunar_lander_key_map)
 
     #  Trajectory interpolation
-    #plotter = VisdomLinePlotter(Visdom(port=9098), xlabel="num steps")
-    #for i in range(6):
-    #    print(i)
-    #    trajecory_interpolation(env, 40, i,"deepmdp" , plotter)
+    plotter = VisdomLinePlotter(Visdom(port=9098), xlabel="num steps")
+    for i in range(6):
+        trajecory_interpolation(env, 40, i,"deepmdp" , plotter)
 
     # Latent Space perturbation
     plotter = VisdomLinePlotter(Visdom(port=9098), xlabel="epsilon in observation space")
     obs = env.reset()
-    num_steps = 4
+    num_steps = 4 # set this to the number of steps you want to evaluate
     for _ in range(num_steps):
         obs, _, _, _ = env.step(0)
         env.render()
 
     for i in range(6):
-        latent_space_eval(obs, "dqn", num_steps, i, plotter)
+        latent_space_eval(obs, "deepmdp", num_steps, i, plotter)
 
