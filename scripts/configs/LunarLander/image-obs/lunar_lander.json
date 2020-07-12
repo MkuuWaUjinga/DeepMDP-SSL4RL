@@ -13,7 +13,7 @@
             "r_loss": 1,
             "t_loss": 1
         },
-        "replay_buffer_size": 400,
+        "replay_buffer_size": 400000,
         "buffer_batch_size": 32,
         "n_train_steps": 1,
         "n_epochs": 20,

@@ -12,9 +12,9 @@
         "learning_rate": 0.0001,
         "loss_weights": {
             "q_loss": 10,
-            "r_loss": 0,
-            "t_loss": 0,
-            "penalty_lambda": 0
+            "r_loss": 1,
+            "t_loss": 1,
+            "penalty_lambda": 0.01
         },
         "replay_buffer_size": 400000,
         "buffer_batch_size": 32,
@@ -27,11 +27,10 @@
         "q-net": {
             "encoder": {
                 "input_shape": [
-                    20
+                    40
                 ],
                 "dense_sizes": [
-                    128,
-                    128,
+                    64,
                     8
                 ]
             },
@@ -57,7 +56,6 @@
             },
             "reward_head": {
                 "dense_sizes": [
-                    128
                     ],
                 "layer_norm": false
             }
