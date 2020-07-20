@@ -1,3 +1,9 @@
+# Reproduction Study of DeepMDP-paper
+
+* Reimplementation using torch, garage and gym.
+* See [report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) for details.
+
+
 # Repo Hygene
 
 * use [git lfs](https://github.com/git-lfs/git-lfs/wiki/Installation) when keeping <50mb files within the repo (images, pdfs, small models)
