@@ -1,4 +1,4 @@
-# Reproduction Study of DeepMDP-paper
+# Reproduction Study of DeepMDP Paper
 
 * Reimplementation using torch, garage and gym.
 * See [report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) for details.
