@@ -4,6 +4,7 @@ reqs=[
     "garage==2019.10.1", # Use version 2019 as newer version auto import mujoco envs making reproduction study without a license impossible
     "scipy",
     "numpy",
+    "dowel",
     "matplotlib",
     "tqdm",
     "attr",

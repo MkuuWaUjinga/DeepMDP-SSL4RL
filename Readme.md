@@ -22,6 +22,10 @@ for details.
 
 ### Running an Experiment
 All experiments are logged and executed using sacred. The configs for the experiments are located in `scripts/configs`.
-If you want to use the auxiliary DeepMDP losses simply set the flag in the config to `true`. The current DQN implementation
-is then split into an encoder part that is shared between the q-head, transition-head and reward head and the q-head itself.
+If you want to use the auxiliary DeepMDP losses simply set the flag in the config to `true`. 
+The specifed DQN architecture is then split into an encoder part that is shared between the q-head, transition-head and reward head and the q-head itself.
 When you are done simply run `python scripts/experiment_dqn_baseline.py --config_path [path]`.
+
+Furthermore, we use Visdom to log experiment data. Make sure to have your Visdom server running on port 9098. For that run `visdom -port 9098`.
+Then you can access it any time via [http://localhost:9098]().
+![hello](./screenshot-visdom.png, "Your Visdom Server")
