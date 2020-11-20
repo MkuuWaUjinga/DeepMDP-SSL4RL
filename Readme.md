@@ -12,9 +12,8 @@ We are going to
 use a DQN for simplicity. 
 
 Since the code was not published we provide an implementation of the algorithm in connection with a DQN. 
-Along with the code we also ran experiments to check the author's claims. See there 
-[report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) you can read to learn more about our results.
-for details.
+Along with the code we also ran experiments to check the author's claims. Have a look at the 
+[report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) to learn more about our results.
 
 ### Setup
 * Clone the repo.
