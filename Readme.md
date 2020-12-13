@@ -1,5 +1,5 @@
 # DeepMDP Replication Study
-Representation learning for RL promises to alleviate two problems 
+Self-supervised representation learning for RL promises to alleviate two problems 
 agents face in real-world environments:
  - Learning good policies from high dimensional and noisy input.
  - Ensure robustness and generalization outside test environment (often simulated).
@@ -8,8 +8,10 @@ DeepMDP is one of the first algorithms in this area that brings theoretical guar
 deep learning world. In line with that it also shows good empirical results in comparison to model-free RL. It can be combined with any model-free policy learning strategy. In the paper the author's used C51. We are going to use a DQN for simplicity. 
 
 Since the code was not published we provide an implementation of the algorithm with a DQN as base algorithm.
-Along with the code we also ran experiments to check the author's claims. Have a look at the 
-[report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) to learn more about our results.
+Along with the code we also ran experiments to check the author's claims. Overall we found evidence that the learnt latent space is more expressive compared to a baseline using no self-supervision :tada:.
+![sensitivity](latent_space_ensitivity_-0.1.png).
+
+Have a look at the [report](https://github.com/MkuuWaUjinga/deepmdp-repro/blob/master/report.pdf) for more details.
 
 ### Setup
 * Clone the repo.
