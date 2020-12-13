@@ -2,7 +2,7 @@
 Self-supervised representation learning for RL promises to alleviate two problems 
 agents face in real-world environments:
  - Learning good policies from high dimensional and noisy input.
- - Ensure robustness and generalization outside test environment (often simulated).
+ - Data efficient learning in settings where training data is expensive to obtain
  
 DeepMDP is one of the first algorithms in this area that brings theoretical guarantees to the
 deep learning world. In line with that it also shows good empirical results in comparison to model-free RL. It can be combined with any model-free policy learning strategy. In the paper the author's used C51. We are going to use a DQN for simplicity. 
